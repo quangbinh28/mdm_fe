@@ -34,7 +34,7 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/login', formData);
+      const response = await axios.post('http://localhost:8080/api/auth/login', formData);
       localStorage.setItem('token', response.data.token);
       alert('Đăng nhập thành công!');
       navigate('/');

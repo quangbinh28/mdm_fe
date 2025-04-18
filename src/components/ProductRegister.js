@@ -22,7 +22,7 @@ const ProductRegister = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/categories');
+        const response = await axios.get('http://localhost:8080/api/categories');
         setCategories(response.data);
       } catch (err) {
         console.error('Lỗi lấy danh mục:', err);
@@ -96,7 +96,7 @@ const ProductRegister = () => {
 
     try {
       await axios.post(
-        'http://localhost:5000/api/products/register',
+        'http://localhost:8080/api/products/insert',
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );

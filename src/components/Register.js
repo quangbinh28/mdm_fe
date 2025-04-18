@@ -65,7 +65,7 @@ const Register = () => {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/register', { phone, password });
+      await axios.post('http://localhost:8080/api/register', { phone, password });
       alert('Đăng ký thành công! Vui lòng đăng nhập.');
       navigate('/login');
     } catch (err) {

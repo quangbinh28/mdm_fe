@@ -26,7 +26,7 @@ const Cart = () => {
     try {
       // Giả lập gọi API thanh toán (thay bằng API thực tế của bạn)
       await axios.post(
-        'http://localhost:5000/api/checkout',
+        'http://localhost:8080/api/checkout',
         { cart },
         { headers: { Authorization: `Bearer ${token}` } }
       );
