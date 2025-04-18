@@ -11,6 +11,7 @@ const Header = () => {
           <input type="text" placeholder="Tìm kiếm sản phẩm..." className="search-input" />
           <button className="search-button">Tìm</button>
           <Link to="/cart" className="nav-link">Giỏ hàng</Link>
+          <Link to="/shop-register" className="nav-link">Đăng ký shop</Link>
           <Link to="/login" className="nav-link">Đăng nhập</Link>
           <Link to="/register" className="nav-link">Đăng ký</Link>
         </div>
