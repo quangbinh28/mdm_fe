@@ -24,7 +24,6 @@ const Cart = () => {
     }
 
     try {
-      // Giả lập gọi API thanh toán (thay bằng API thực tế của bạn)
       await axios.post(
         'http://localhost:8080/api/checkout',
         { cart },

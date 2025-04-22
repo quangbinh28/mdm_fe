@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import qs from 'qs'; // thêm gói này nếu chưa có
 import '../styles/Login.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    phone: '',
+    phoneNumber: '',
     password: '',
   });
   const [error, setError] = useState('');
@@ -20,22 +21,33 @@ const Login = () => {
     e.preventDefault();
     setError('');
 
-    const { phone, password } = formData;
-    if (!phone || !password) {
+    const { phoneNumber, password } = formData;
+    if (!phoneNumber || !password) {
       setError('Vui lòng điền đầy đủ thông tin!');
       return;
     }
 
     // Validate số điện thoại
     const phoneRegex = /^(?:\+84|0)(?:3|5|7|8|9)\d{8}$/;
-    if (!phoneRegex.test(phone)) {
+    if (!phoneRegex.test(phoneNumber)) {
       setError('Số điện thoại không hợp lệ! (Ví dụ: 0987654321 hoặc +84987654321)');
       return;
     }
 
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', formData);
-      localStorage.setItem('token', response.data.token);
+      const response = await axios.post(
+        'http://localhost:8080/api/auth/login',
+        qs.stringify({
+          phoneNumber,
+          password,
+        }),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+      //localStorage.setItem('token', response.data.token);
       alert('Đăng nhập thành công!');
       navigate('/');
     } catch (err) {
@@ -52,8 +64,8 @@ const Login = () => {
           <label>Số điện thoại</label>
           <input
             type="text"
-            name="phone"
-            value={formData.phone}
+            name="phoneNumber"
+            value={formData.phoneNumber}
             onChange={handleChange}
             placeholder="Nhập số điện thoại..."
             required

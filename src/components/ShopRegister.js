@@ -57,7 +57,7 @@ const ShopRegister = () => {
 
     try {
       await axios.post(
-        'http://localhost:8080/api/shops/register',
+        'http://localhost:8080/api/auth/register/shop',
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
