@@ -3,22 +3,35 @@ import { Link } from 'react-router-dom';
 import '../styles/Header.css';
 
 const Header = () => {
+  const user = JSON.parse(localStorage.getItem('user'));
   const token = localStorage.getItem('token');
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/';
+  };
 
   return (
     <header className="header">
-      <div className="container">
-        <Link to="/" className="logo">Shopee</Link>
-        <div className="nav">
-          <input type="text" placeholder="Tìm kiếm sản phẩm..." className="search-input" />
-          <button className="search-button">Tìm</button>
-          <Link to="/cart" className="nav-link">Giỏ hàng</Link>
-          <Link to="/product-register" className="nav-link">Đăng ký sản phẩm</Link>
-          <Link to="/shop-register" className="nav-link">Đăng ký shop</Link>
-          <Link to="/login" className="nav-link">Đăng nhập</Link>
-          <Link to="/register" className="nav-link">Đăng ký</Link>
-        </div>
-      </div>
+      <div className="logo">Shopee Clone</div>
+      <nav>
+        <Link to="/">Trang chủ</Link>
+        <Link to="/cart">Giỏ hàng</Link>
+        {user ? (
+          <>
+            <Link to="/shop-register">Đăng ký shop</Link>
+            <Link to="/product-register">Đăng ký sản phẩm</Link>
+            <span>Chào, {user?.customerPhone || 'User'}</span>
+            <button onClick={handleLogout} className="logout-button">Đăng xuất</button>
+          </>
+        ) : (
+          <>
+            <Link to="/login">Đăng nhập</Link>
+            <Link to="/register">Đăng ký</Link>
+          </>
+        )}
+      </nav>
     </header>
   );
 };

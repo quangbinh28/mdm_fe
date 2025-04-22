@@ -47,6 +47,14 @@ const Login = () => {
           },
         }
       );
+
+      const user = response.data;
+      // Lưu thông tin user (trừ password)
+      const { password: _, ...userWithoutPassword } = user;
+      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      
+      console.log(user);
+
       //localStorage.setItem('token', response.data.token);
       alert('Đăng nhập thành công!');
       navigate('/');
