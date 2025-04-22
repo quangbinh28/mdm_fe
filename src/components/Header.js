@@ -4,10 +4,8 @@ import '../styles/Header.css';
 
 const Header = () => {
   const user = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem('token');
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/';
   };
@@ -22,7 +20,7 @@ const Header = () => {
           <>
             <Link to="/shop-register">Đăng ký shop</Link>
             <Link to="/product-register">Đăng ký sản phẩm</Link>
-            <span>Chào, {user?.customerPhone || 'User'}</span>
+            <span>Chào, {user.customerPhone || 'User'}</span>
             <button onClick={handleLogout} className="logout-button">Đăng xuất</button>
           </>
         ) : (

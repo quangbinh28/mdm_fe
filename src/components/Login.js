@@ -53,10 +53,11 @@ const Login = () => {
       const { password: _, ...userWithoutPassword } = user;
       localStorage.setItem('user', JSON.stringify(userWithoutPassword));
       
-      console.log(user);
+      alert('Đăng nhập thành công!');
+
+      window.location.href = '/';
 
       //localStorage.setItem('token', response.data.token);
-      alert('Đăng nhập thành công!');
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Đăng nhập thất bại! Vui lòng thử lại.');
