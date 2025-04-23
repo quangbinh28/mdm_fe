@@ -36,6 +36,7 @@ const Cart = () => {
             productSKU: item.productSKU,
             quantity: item.quantity,
             price: item.price,
+            image: item.productImg
           });
         });
       });
@@ -63,6 +64,7 @@ const Cart = () => {
       productSKU: item.productSKU,
       quantity: newQuantity,
       price: item.price,
+      image: item.image
     };
 
     try {
@@ -141,6 +143,9 @@ const Cart = () => {
           <div className="cart-items">
             {cart.map((item) => (
               <div key={`${item.shopName}-${item.productId}`} className="cart-item">
+                <div className="cart-item-image">
+                  <img src={item.image || 'https://via.placeholder.com/100'} alt={item.productName} />
+                </div>
                 <div className="cart-item-details">
                   <h4>{item.productName}</h4>
                   <p className="shop-name"><strong>Cửa hàng:</strong> {item.shopName}</p>

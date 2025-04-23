@@ -4,15 +4,16 @@ import axios from 'axios';
 import '../styles/ProductDetails.css';
 
 const ProductDetails = () => {
-  const { id } = useParams(); // Lấy id từ URL
+  const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null); // State để lưu biến thể đã chọn
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   // Lấy user từ localStorage
   const user = JSON.parse(localStorage.getItem('user'));
-  const userId = user?.customerId; // Đồng bộ với ProductList.js
+  const userId = user?.customerId;
 
   // Lấy thông tin sản phẩm từ API
   const fetchProduct = async () => {
@@ -22,6 +23,10 @@ const ProductDetails = () => {
       const response = await axios.get(`http://localhost:8080/api/product/${id}`);
       console.log('API response:', response.data);
       setProduct(response.data);
+      // Đặt biến thể mặc định là biến thể đầu tiên (nếu có)
+      if (response.data.variants && response.data.variants.length > 0) {
+        setSelectedVariant(response.data.variants[0]);
+      }
       setLoading(false);
     } catch (err) {
       console.error('API error:', err);
@@ -43,13 +48,19 @@ const ProductDetails = () => {
       return;
     }
 
+    if (!selectedVariant) {
+      setError('Vui lòng chọn một biến thể trước khi thêm vào giỏ hàng!');
+      return;
+    }
+
     const cartItem = {
       productId: product.id,
-      productName: product.name,
+      productName: `${product.name} - ${selectedVariant.name}`, // Thêm tên biến thể vào productName
       productSKU: "unknown",
       quantity: 1,
-      price: product.variants[0]?.price || 0, // Lấy giá từ biến thể đầu tiên
-      image: product.image
+      price: selectedVariant.price || 0,
+      productImg: product.image,
+      variantName: selectedVariant.name
     };
 
     try {
@@ -102,28 +113,46 @@ const ProductDetails = () => {
           <div className="variants">
             <h4>Biến thể sản phẩm:</h4>
             {product.variants.length > 0 ? (
-              <table className="variant-table">
-                <thead>
-                  <tr>
-                    <th>Tên biến thể</th>
-                    <th>Kích thước</th>
-                    <th>Màu sắc</th>
-                    <th>Tồn kho</th>
-                    <th>Giá</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {product.variants.map((variant) => (
-                    <tr key={variant.id}>
-                      <td>{variant.name}</td>
-                      <td>{variant.size || 'N/A'}</td>
-                      <td>{variant.color || 'N/A'}</td>
-                      <td>{variant.quantity}</td>
-                      <td>{variant.price.toLocaleString('vi-VN')}đ</td>
+              <>
+                <table className="variant-table">
+                  <thead>
+                    <tr>
+                      <th>Tên biến thể</th>
+                      <th>Kích thước</th>
+                      <th>Màu sắc</th>
+                      <th>Tồn kho</th>
+                      <th>Giá</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {product.variants.map((variant) => (
+                      <tr key={variant.id}>
+                        <td>{variant.name}</td>
+                        <td>{variant.size || 'N/A'}</td>
+                        <td>{variant.color || 'N/A'}</td>
+                        <td>{variant.quantity}</td>
+                        <td>{variant.price.toLocaleString('vi-VN')}đ</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="variant-selector">
+                  <label>Chọn biến thể: </label>
+                  <select
+                    value={selectedVariant?.id || ''}
+                    onChange={(e) => {
+                      const variant = product.variants.find(v => v.id === parseInt(e.target.value));
+                      setSelectedVariant(variant);
+                    }}
+                  >
+                    {product.variants.map(variant => (
+                      <option key={variant.id} value={variant.id}>
+                        {variant.name} - {variant.price.toLocaleString('vi-VN')}đ
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
             ) : (
               <p>Không có biến thể.</p>
             )}
