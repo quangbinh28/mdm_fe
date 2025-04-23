@@ -180,7 +180,7 @@ const ProductRegister = () => {
       await axios.post('http://localhost:8080/api/product/insert', formDataToSend, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      alert('Đăng ký sản phẩm thành công! Lưu ý: Giá và số lượng tổng sẽ mặc định là 0.');
+      alert('Đăng ký sản phẩm thành công');
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Đăng ký sản phẩm thất bại!');

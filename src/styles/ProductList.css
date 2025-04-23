@@ -9,6 +9,49 @@
   color: #333;
 }
 
+.search-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.search-button {
+  padding: 10px 20px;
+  background-color: #ee4d2d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-button:hover {
+  background-color: #d43f21;
+}
+
+.clear-button {
+  padding: 10px 20px;
+  background-color: #ccc;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.clear-button:hover {
+  background-color: #bbb;
+}
+
 .product-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -30,8 +73,9 @@
   border-radius: 4px;
 }
 
-.product-item h3 {
-  font-size: 18px;
+.product-name {
+  font-size: 20px;
+  font-weight: bold;
   margin: 10px 0;
   color: #333;
 }
@@ -77,6 +121,37 @@
 
 .detail-button:hover {
   background-color: #45a049;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.pagination button {
+  padding: 8px 12px;
+  background-color: #ee4d2d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #d43f21;
+}
+
+.pagination span {
+  font-size: 16px;
+  color: #333;
 }
 
 .error {
