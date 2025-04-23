@@ -1,11 +1,9 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { CartContext } from '../context/CartContext';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/ProductList.css';
 
 const ProductList = () => {
-  const { addToCart } = useContext(CartContext);
   const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -14,6 +12,11 @@ const ProductList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const pageSize = 12;
   const [isSearching, setIsSearching] = useState(false);
+  const navigate = useNavigate();
+
+  // Lấy user từ localStorage
+  const user = JSON.parse(localStorage.getItem('user'));
+  const userId = user.customerId;
 
   const fetchAllProducts = async () => {
     setLoading(true);
@@ -33,11 +36,35 @@ const ProductList = () => {
     try {
       const response = await axios.get(`http://localhost:8080/api/product/search?name=${searchTerm}`);
       setProducts(response.data);
-      setTotalPages(1); // API tìm kiếm chưa hỗ trợ phân trang
+      setTotalPages(1);
       setLoading(false);
     } catch (err) {
       setError('Không tìm thấy sản phẩm nào khớp với tên! Vui lòng thử lại.');
       setLoading(false);
+    }
+  };
+
+  const addToCart = async (product) => {
+    // Kiểm tra nếu người dùng chưa đăng nhập
+    if (!userId) {
+      alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
+      navigate('/login'); // Chuyển hướng đến trang đăng nhập
+      return;
+    }
+
+    const cartItem = {
+      productId: product.id,
+      productName: product.prodName,
+      price: product.prodPrice,
+      image: getProductImage(product),
+      quantity: 1
+    };
+
+    try {
+      await axios.post(`http://localhost:8080/cart/add-item/${userId}`, cartItem);
+      alert('Sản phẩm đã được thêm vào giỏ hàng!');
+    } catch (err) {
+      setError('Không thể thêm sản phẩm vào giỏ hàng! Vui lòng thử lại.');
     }
   };
 
@@ -55,7 +82,7 @@ const ProductList = () => {
 
   const handleSearchButton = () => {
     setIsSearching(true);
-    setPageNumber(0); // Reset về trang đầu khi tìm kiếm
+    setPageNumber(0);
   };
 
   const handleClearSearch = () => {
@@ -111,12 +138,7 @@ const ProductList = () => {
                 <div className="button-group">
                   <button
                     className="add-button"
-                    onClick={() => addToCart({
-                      id: product.id,
-                      name: product.prodName,
-                      price: product.prodPrice,
-                      image: getProductImage(product),
-                    })}
+                    onClick={() => addToCart(product)}
                   >
                     Thêm vào giỏ
                   </button>

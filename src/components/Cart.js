@@ -1,42 +1,124 @@
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
-import { CartContext } from '../context/CartContext';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/Cart.css';
 
 const Cart = () => {
-  const { cart, updateQuantity, removeFromCart } = useContext(CartContext);
+  const [cart, setCart] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
+  // Lấy user từ localStorage
+  const user = JSON.parse(localStorage.getItem('user'));
+  const userId = user.customerId;
+
+  // Tính tổng tiền
   const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
+  // Lấy giỏ hàng từ backend
+  const fetchCart = async () => {
+    if (!userId) {
+      setError('Vui lòng đăng nhập để xem giỏ hàng!');
+      setLoading(false);
+      navigate('/login');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.get(`http://localhost:8080/cart/get-cart/${userId}`);
+      // Chuyển Map thành mảng và thêm id cho mỗi item
+      const cartItems = Object.entries(response.data).map(([key, item]) => ({
+        id: key, // productId
+        productId: item.productId,
+        productName: item.productName,
+        productSKU: item.productSKU,
+        quantity: item.quantity,
+        price: item.price
+      }));
+      setCart(cartItems);
+      setLoading(false);
+    } catch (err) {
+      setError('Không thể tải giỏ hàng! Vui lòng thử lại.');
+      setLoading(false);
+    }
+  };
+
+  // Cập nhật số lượng
+  const updateQuantity = async (productId, newQuantity) => {
+    if (newQuantity < 1) return; // Không cho phép số lượng nhỏ hơn 1
+
+    const item = cart.find(item => item.productId === productId);
+    if (!item) return;
+
+    const updatedItem = {
+      productId: item.productId,
+      productName: item.productName,
+      productSKU: item.productSKU,
+      quantity: newQuantity,
+      price: item.price
+    };
+
+    try {
+      await axios.post(`http://localhost:8080/cart/add-item/${userId}`, updatedItem);
+      // Cập nhật state giỏ hàng
+      setCart(cart.map(item =>
+        item.productId === productId ? { ...item, quantity: newQuantity } : item
+      ));
+    } catch (err) {
+      setError('Không thể cập nhật số lượng! Vui lòng thử lại.');
+    }
+  };
+
+  // Xóa sản phẩm khỏi giỏ hàng
+  const removeFromCart = async (productId) => {
+    try {
+      await axios.delete(`http://localhost:8080/cart/delete-item/${userId}/${productId}`);
+      // Cập nhật state giỏ hàng
+      setCart(cart.filter(item => item.productId !== productId));
+    } catch (err) {
+      setError('Không thể xóa sản phẩm! Vui lòng thử lại.');
+    }
+  };
+
+  // Thanh toán
   const handleCheckout = async () => {
     if (cart.length === 0) {
       alert('Giỏ hàng trống!');
       return;
     }
 
-    // Kiểm tra đăng nhập
-    const token = localStorage.getItem('token');
-    if (!token) {
+    if (!userId) {
       alert('Vui lòng đăng nhập để thanh toán!');
-      window.location.href = '/login';
+      navigate('/login');
       return;
     }
 
     try {
-      await axios.post(
-        'http://localhost:8080/api/checkout',
-        { cart },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.post('http://localhost:8080/api/checkout', { cart });
+      // Xóa giỏ hàng trên backend
+      await axios.delete(`http://localhost:8080/cart/delete/${userId}`);
+      setCart([]); // Cập nhật state giỏ hàng
       alert('Thanh toán thành công!');
-      // Xóa giỏ hàng sau thanh toán
-      localStorage.removeItem('cart');
-      window.location.href = '/';
+      navigate('/');
     } catch (err) {
       alert('Thanh toán thất bại! Vui lòng thử lại.');
     }
   };
+
+  // Lấy giỏ hàng khi component mount
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  if (loading) {
+    return <div className="cart-container">Đang tải giỏ hàng...</div>;
+  }
+
+  if (error) {
+    return <div className="cart-container"><p className="error">{error}</p></div>;
+  }
 
   return (
     <div className="cart-container">
@@ -48,27 +130,26 @@ const Cart = () => {
           <div className="cart-items">
             {cart.map((item) => (
               <div key={item.id} className="cart-item">
-                <img src={item.image} alt={item.name} />
                 <div className="cart-item-details">
-                  <h3>{item.name}</h3>
+                  <h3>{item.productName}</h3>
                   <p className="price">{(item.price * item.quantity).toLocaleString('vi-VN')}đ</p>
                   <div className="quantity-control">
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => updateQuantity(item.productId, item.quantity - 1)}
                       disabled={item.quantity === 1}
                     >
                       -
                     </button>
                     <span>{item.quantity}</span>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                     >
                       +
                     </button>
                   </div>
                   <button
                     className="remove-button"
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(item.productId)}
                   >
                     Xóa
                   </button>
