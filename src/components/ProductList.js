@@ -16,7 +16,7 @@ const ProductList = () => {
 
   // Lấy user từ localStorage
   const user = JSON.parse(localStorage.getItem('user'));
-  const userId = user.customerId;
+  //const userId = user.customerId;
 
   const fetchAllProducts = async () => {
     setLoading(true);
@@ -46,7 +46,7 @@ const ProductList = () => {
 
   const addToCart = async (product) => {
     // Kiểm tra nếu người dùng chưa đăng nhập
-    if (!userId) {
+    if (!user.customerId) {
       alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
       navigate('/login'); // Chuyển hướng đến trang đăng nhập
       return;
@@ -61,7 +61,7 @@ const ProductList = () => {
     };
 
     try {
-      await axios.post(`http://localhost:8080/cart/add-item/${userId}`, cartItem);
+      await axios.post(`http://localhost:8080/cart/add-item/${user.customerId}`, cartItem);
       alert('Sản phẩm đã được thêm vào giỏ hàng!');
     } catch (err) {
       setError('Không thể thêm sản phẩm vào giỏ hàng! Vui lòng thử lại.');
@@ -136,12 +136,6 @@ const ProductList = () => {
                 <h3 className="product-name">{product.prodName}</h3>
                 <p className="price">{product.prodPrice.toLocaleString('vi-VN')}đ</p>
                 <div className="button-group">
-                  <button
-                    className="add-button"
-                    onClick={() => addToCart(product)}
-                  >
-                    Thêm vào giỏ
-                  </button>
                   <Link to={`/products/${product.id}`} className="detail-button">
                     Xem chi tiết
                   </Link>

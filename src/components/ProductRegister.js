@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/ProductRegister.css';
@@ -11,10 +11,43 @@ const ProductRegister = () => {
     brand: '',
     productVariants: [{ id: 1, name: '', size: '', color: '', quantity: 0, price: 0 }],
     file: null,
+    shopId: '',
+    shopName: '',
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
+  const userId = user.customerId;
+
+  // Lấy thông tin shop từ API
+  const fetchShop = async () => {
+    if (!userId) {
+      setError('Vui lòng đăng nhập để lấy thông tin cửa hàng!');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await axios.get(`http://localhost:8080/api/shop/get-shop/${userId}`);
+      const shopData = response.data;
+      if (shopData) {
+        setFormData((prev) => ({
+          ...prev,
+          shopId: shopData.shopId,
+          shopName: shopData.shopName
+        }));
+      } else {
+        setError('Bạn chưa có cửa hàng! Vui lòng tạo cửa hàng trước.');
+      }
+    } catch (err) {
+      setError('Không thể tải thông tin cửa hàng! Vui lòng thử lại.');
+    }
+  };
+
+  // Gọi API lấy thông tin shop khi component mount
+  useEffect(() => {
+    fetchShop();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -103,13 +136,13 @@ const ProductRegister = () => {
     e.preventDefault();
     setError('');
 
-    if (!user) {
+    if (!userId) {
       setError('Vui lòng đăng nhập để đăng ký sản phẩm!');
       navigate('/login');
       return;
     }
 
-    const { productName, productCategories, productVariants, file } = formData;
+    const { productName, productCategories, productVariants, file, shopId, shopName } = formData;
 
     // Validate basic fields
     if (!productName) {
@@ -126,6 +159,10 @@ const ProductRegister = () => {
     }
     if (!file) {
       setError('Vui lòng chọn hình ảnh sản phẩm!');
+      return;
+    }
+    if (!shopId) {
+      setError('Bạn chưa có cửa hàng! Vui lòng tạo cửa hàng trước.');
       return;
     }
 
@@ -167,6 +204,12 @@ const ProductRegister = () => {
       }
     }
 
+    // Tạo shopInfo với shopId và shopName
+    const shopInfo = {
+      shopId: shopId,
+      shopName: shopName
+    };
+
     // Prepare FormData for multipart/form-data
     const formDataToSend = new FormData();
     formDataToSend.append('productName', productName);
@@ -174,6 +217,7 @@ const ProductRegister = () => {
     formDataToSend.append('productCategories', JSON.stringify(productCategories));
     formDataToSend.append('brand', formData.brand || '');
     formDataToSend.append('productVariants', JSON.stringify(productVariants));
+    formDataToSend.append('shopInfo', JSON.stringify(shopInfo));
     formDataToSend.append('file', file);
 
     try {
@@ -214,6 +258,17 @@ const ProductRegister = () => {
               value={formData.productDescription}
               onChange={handleInputChange}
               placeholder="Nhập mô tả sản phẩm..."
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Cửa hàng *</label>
+            <input
+              type="text"
+              value={formData.shopName}
+              readOnly
+              placeholder="Tên cửa hàng..."
+              required
             />
           </div>
 

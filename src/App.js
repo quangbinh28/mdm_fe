@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Banner from './components/Banner';
 import ProductList from './components/ProductList';
+import ProductDetails from './components/ProductDetails'; // Thêm import
 import Login from './components/Login';
 import Register from './components/Register';
 import Cart from './components/Cart';
@@ -23,6 +24,7 @@ const App = () => {
             </div>
           }
         />
+        <Route path="/products/:id" element={<ProductDetails />} /> {/* Thêm route */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/cart" element={<Cart />} />
