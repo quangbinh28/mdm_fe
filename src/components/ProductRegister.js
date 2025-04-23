@@ -14,10 +14,11 @@ const ProductRegister = () => {
     shopId: '',
     shopName: '',
   });
+  const [categories, setCategories] = useState([]); // Danh sách danh mục từ API
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
-  const userId = user.customerId;
+  const userId = user?.customerId;
 
   // Lấy thông tin shop từ API
   const fetchShop = async () => {
@@ -44,17 +45,32 @@ const ProductRegister = () => {
     }
   };
 
-  // Gọi API lấy thông tin shop khi component mount
+  // Lấy danh sách danh mục từ API
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/category/all-categories');
+      setCategories(response.data);
+    } catch (err) {
+      setError('Không thể tải danh sách danh mục! Vui lòng thử lại.');
+    }
+  };
+
+  // Gọi API khi component mount
   useEffect(() => {
     fetchShop();
+    fetchCategories();
   }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name.includes('productCategories')) {
-      const [field, index, subField] = name.split('.');
+      const [field, index] = name.split('.');
       const newCategories = [...formData.productCategories];
-      newCategories[index][subField] = value;
+      const selectedCategory = categories.find(cat => cat.code === value);
+      newCategories[index] = {
+        id: selectedCategory ? selectedCategory.code : '',
+        name: selectedCategory ? selectedCategory.name : ''
+      };
       setFormData((prev) => ({ ...prev, productCategories: newCategories }));
     } else if (name.includes('productVariants')) {
       const [field, index, subField] = name.split('.');
@@ -170,11 +186,7 @@ const ProductRegister = () => {
     for (let i = 0; i < productCategories.length; i++) {
       const category = productCategories[i];
       if (!category.id) {
-        setError(`Vui lòng nhập mã danh mục thứ ${i + 1}!`);
-        return;
-      }
-      if (!category.name) {
-        setError(`Vui lòng nhập tên danh mục thứ ${i + 1}!`);
+        setError(`Vui lòng chọn danh mục thứ ${i + 1}!`);
         return;
       }
     }
@@ -183,7 +195,7 @@ const ProductRegister = () => {
     const categoryIds = productCategories.map(cat => cat.id);
     const hasDuplicateCategory = categoryIds.some((id, index) => id && categoryIds.indexOf(id) !== index);
     if (hasDuplicateCategory) {
-      setError('Mã danh mục không được trùng lặp!');
+      setError('Danh mục không được trùng lặp!');
       return;
     }
 
@@ -276,22 +288,19 @@ const ProductRegister = () => {
             <label>Danh mục sản phẩm *</label>
             {formData.productCategories.map((category, index) => (
               <div key={index} className="category-group">
-                <input
-                  type="text"
-                  name={`productCategories.${index}.id`}
+                <select
+                  name={`productCategories.${index}`}
                   value={category.id}
                   onChange={handleInputChange}
-                  placeholder="Mã danh mục..."
                   required
-                />
-                <input
-                  type="text"
-                  name={`productCategories.${index}.name`}
-                  value={category.name}
-                  onChange={handleInputChange}
-                  placeholder="Tên danh mục..."
-                  required
-                />
+                >
+                  <option value="">Chọn danh mục...</option>
+                  {categories.map((cat) => (
+                    <option key={cat.code} value={cat.code}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
                 <div className="category-actions">
                   <span
                     className="sort-icon"
