@@ -42,16 +42,44 @@
   margin-bottom: 10px;
 }
 
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
 .add-button {
-  width: 100%;
+  flex: 1;
   padding: 10px;
   background-color: #ee4d2d;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  text-align: center;
 }
 
 .add-button:hover {
   background-color: #d43f21;
+}
+
+.detail-button {
+  flex: 1;
+  padding: 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+}
+
+.detail-button:hover {
+  background-color: #45a049;
+}
+
+.error {
+  color: red;
+  text-align: center;
 }
