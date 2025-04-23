@@ -15,10 +15,11 @@ const Cart = () => {
 
   // Thông tin thanh toán
   const [address, setAddress] = useState({
+    houseNumber: '',
     street: '',
     city: '',
-    state: '',
-    zipCode: ''
+    ward: '',
+    district: ''
   });
   const [shipMethod, setShipMethod] = useState({ methodName: 'STANDARD', cod: false });
   const [paymentMethod, setPaymentMethod] = useState('CREDIT_CARD');
@@ -124,7 +125,7 @@ const Cart = () => {
     }
 
     // Kiểm tra thông tin địa chỉ
-    if (!address.street || !address.city || !address.state || !address.zipCode) {
+    if (!address.houseNumber || !address.street || !address.city || !address.ward || !address.district) {
       alert('Vui lòng nhập đầy đủ thông tin địa chỉ!');
       return;
     }
@@ -143,10 +144,11 @@ const Cart = () => {
     const orderRequest = {
       userId: userId,
       address: {
+        houseNumber: address.houseNumber,
         street: address.street,
         city: address.city,
-        state: address.state,
-        zipCode: address.zipCode
+        ward: address.ward,
+        district: address.district
       },
       products: cart.map(item => ({
         productId: item.productId,
@@ -242,7 +244,13 @@ const Cart = () => {
               <label>Địa chỉ: </label>
               <input
                 type="text"
-                placeholder="Số nhà, đường"
+                placeholder="Số nhà"
+                value={address.houseNumber}
+                onChange={(e) => setAddress({ ...address, houseNumber: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Đường"
                 value={address.street}
                 onChange={(e) => setAddress({ ...address, street: e.target.value })}
               />
@@ -254,15 +262,15 @@ const Cart = () => {
               />
               <input
                 type="text"
-                placeholder="Tỉnh/Quận"
-                value={address.state}
-                onChange={(e) => setAddress({ ...address, state: e.target.value })}
+                placeholder="Phường"
+                value={address.ward}
+                onChange={(e) => setAddress({ ...address, ward: e.target.value })}
               />
               <input
                 type="text"
-                placeholder="Mã bưu điện"
-                value={address.zipCode}
-                onChange={(e) => setAddress({ ...address, zipCode: e.target.value })}
+                placeholder="Quận"
+                value={address.district}
+                onChange={(e) => setAddress({ ...address, district: e.target.value })}
               />
             </div>
             <div className="form-group">

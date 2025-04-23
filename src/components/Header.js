@@ -20,6 +20,7 @@ const Header = () => {
           <>
             <Link to="/shop-register">Đăng ký shop</Link>
             <Link to="/product-register">Đăng ký sản phẩm</Link>
+            <Link to="/user-profile">Hồ sơ</Link>
             <span>Chào, {user.customerPhone || 'User'}</span>
             <button onClick={handleLogout} className="logout-button">Đăng xuất</button>
           </>
