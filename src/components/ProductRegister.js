@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/ProductRegister.css';
 
@@ -7,56 +7,70 @@ const ProductRegister = () => {
   const [formData, setFormData] = useState({
     productName: '',
     productDescription: '',
-    productCategories: [],
+    productCategories: [{ id: '', name: '' }],
     brand: '',
-    productVariants: [{ size: '', color: '', price: '' }],
-    productPrice: '',
-    productImg: '',
-    productQuantity: '',
+    productVariants: [{ id: 1, name: '', size: '', color: '', quantity: 0, price: 0 }],
+    file: null,
   });
-  const [categories, setCategories] = useState([]);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user'));
 
-  // Lấy danh sách danh mục từ API
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get('http://localhost:8080/api/categories');
-        setCategories(response.data);
-      } catch (err) {
-        console.error('Lỗi lấy danh mục:', err);
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  const handleChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name.includes('productCategories')) {
+      const [field, index, subField] = name.split('.');
+      const newCategories = [...formData.productCategories];
+      newCategories[index][subField] = value;
+      setFormData((prev) => ({ ...prev, productCategories: newCategories }));
+    } else if (name.includes('productVariants')) {
+      const [field, index, subField] = name.split('.');
+      const newVariants = [...formData.productVariants];
+      newVariants[index][subField] = subField === 'quantity' || subField === 'price' ? parseFloat(value) || 0 : value;
+      setFormData((prev) => ({ ...prev, productVariants: newVariants }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
-  const handleCategoryChange = (categoryId) => {
-    setFormData((prev) => {
-      const productCategories = prev.productCategories.includes(categoryId)
-        ? prev.productCategories.filter((id) => id !== categoryId)
-        : [...prev.productCategories, categoryId];
-      return { ...prev, productCategories };
-    });
+  const addCategory = () => {
+    setFormData((prev) => ({
+      ...prev,
+      productCategories: [
+        ...prev.productCategories,
+        { id: '', name: '' },
+      ],
+    }));
   };
 
-  const handleVariantChange = (index, field, value) => {
-    setFormData((prev) => {
-      const productVariants = [...prev.productVariants];
-      productVariants[index] = { ...productVariants[index], [field]: value };
-      return { ...prev, productVariants };
-    });
+  const removeCategory = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      productCategories: prev.productCategories.filter((_, i) => i !== index),
+    }));
+  };
+
+  const moveCategoryUp = (index) => {
+    if (index === 0) return;
+    const newCategories = [...formData.productCategories];
+    [newCategories[index - 1], newCategories[index]] = [newCategories[index], newCategories[index - 1]];
+    setFormData((prev) => ({ ...prev, productCategories: newCategories }));
+  };
+
+  const moveCategoryDown = (index) => {
+    if (index === formData.productCategories.length - 1) return;
+    const newCategories = [...formData.productCategories];
+    [newCategories[index], newCategories[index + 1]] = [newCategories[index + 1], newCategories[index]];
+    setFormData((prev) => ({ ...prev, productCategories: newCategories }));
   };
 
   const addVariant = () => {
     setFormData((prev) => ({
       ...prev,
-      productVariants: [...prev.productVariants, { size: '', color: '', price: '' }],
+      productVariants: [
+        ...prev.productVariants,
+        { id: prev.productVariants.length + 1, name: '', size: '', color: '', quantity: 0, price: 0 },
+      ],
     }));
   };
 
@@ -67,43 +81,109 @@ const ProductRegister = () => {
     }));
   };
 
+  const moveVariantUp = (index) => {
+    if (index === 0) return;
+    const newVariants = [...formData.productVariants];
+    [newVariants[index - 1], newVariants[index]] = [newVariants[index], newVariants[index - 1]];
+    setFormData((prev) => ({ ...prev, productVariants: newVariants }));
+  };
+
+  const moveVariantDown = (index) => {
+    if (index === formData.productVariants.length - 1) return;
+    const newVariants = [...formData.productVariants];
+    [newVariants[index], newVariants[index + 1]] = [newVariants[index + 1], newVariants[index]];
+    setFormData((prev) => ({ ...prev, productVariants: newVariants }));
+  };
+
+  const handleFileChange = (e) => {
+    setFormData((prev) => ({ ...prev, file: e.target.files[0] }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // Kiểm tra các trường bắt buộc
-    const { productName, productDescription, productCategories, brand, productVariants, productPrice, productImg, productQuantity } = formData;
-    if (!productName || !productDescription || productCategories.length === 0 || !brand || productVariants.length === 0 || !productPrice || !productImg || !productQuantity) {
-      setError('Vui lòng điền đầy đủ thông tin!');
-      return;
-    }
-
-    // Kiểm tra biến thể
-    for (const variant of productVariants) {
-      if (!variant.size || !variant.color || !variant.price) {
-        setError('Vui lòng điền đầy đủ thông tin biến thể!');
-        return;
-      }
-    }
-
-    // Kiểm tra đăng nhập
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Vui lòng đăng nhập để đăng ký sản phẩm!');
+    if (!user) {
+      setError('Vui lòng đăng nhập để đăng ký sản phẩm!');
       navigate('/login');
       return;
     }
 
+    const { productName, productCategories, productVariants, file } = formData;
+
+    // Validate basic fields
+    if (!productName) {
+      setError('Vui lòng nhập tên sản phẩm!');
+      return;
+    }
+    if (productCategories.length === 0) {
+      setError('Vui lòng thêm ít nhất một danh mục!');
+      return;
+    }
+    if (productVariants.length === 0) {
+      setError('Vui lòng thêm ít nhất một biến thể sản phẩm!');
+      return;
+    }
+    if (!file) {
+      setError('Vui lòng chọn hình ảnh sản phẩm!');
+      return;
+    }
+
+    // Validate productCategories
+    for (let i = 0; i < productCategories.length; i++) {
+      const category = productCategories[i];
+      if (!category.id) {
+        setError(`Vui lòng nhập mã danh mục thứ ${i + 1}!`);
+        return;
+      }
+      if (!category.name) {
+        setError(`Vui lòng nhập tên danh mục thứ ${i + 1}!`);
+        return;
+      }
+    }
+
+    // Validate unique category IDs
+    const categoryIds = productCategories.map(cat => cat.id);
+    const hasDuplicateCategory = categoryIds.some((id, index) => id && categoryIds.indexOf(id) !== index);
+    if (hasDuplicateCategory) {
+      setError('Mã danh mục không được trùng lặp!');
+      return;
+    }
+
+    // Validate productVariants
+    for (let i = 0; i < productVariants.length; i++) {
+      const variant = productVariants[i];
+      if (!variant.name) {
+        setError(`Vui lòng nhập tên biến thể thứ ${i + 1}!`);
+        return;
+      }
+      if (variant.quantity < 1) {
+        setError(`Tồn kho của biến thể thứ ${i + 1} phải lớn hơn hoặc bằng 1!`);
+        return;
+      }
+      if (variant.price < 1) {
+        setError(`Giá của biến thể thứ ${i + 1} phải lớn hơn hoặc bằng 1!`);
+        return;
+      }
+    }
+
+    // Prepare FormData for multipart/form-data
+    const formDataToSend = new FormData();
+    formDataToSend.append('productName', productName);
+    formDataToSend.append('productDescription', formData.productDescription || '');
+    formDataToSend.append('productCategories', JSON.stringify(productCategories));
+    formDataToSend.append('brand', formData.brand || '');
+    formDataToSend.append('productVariants', JSON.stringify(productVariants));
+    formDataToSend.append('file', file);
+
     try {
-      await axios.post(
-        'http://localhost:8080/api/products/insert',
-        formData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      alert('Đăng ký sản phẩm thành công!');
+      await axios.post('http://localhost:8080/api/product/insert', formDataToSend, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      alert('Đăng ký sản phẩm thành công! Lưu ý: Giá và số lượng tổng sẽ mặc định là 0.');
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Đăng ký sản phẩm thất bại! Vui lòng thử lại.');
+      setError(err.response?.data?.message || 'Đăng ký sản phẩm thất bại!');
     }
   };
 
@@ -111,128 +191,172 @@ const ProductRegister = () => {
     <div className="product-register-container">
       <h2>Đăng ký sản phẩm</h2>
       {error && <p className="error">{error}</p>}
-      <form onSubmit={handleSubmit} className="product-register-form">
-        <div className="form-group">
-          <label>Tên sản phẩm</label>
-          <input
-            type="text"
-            name="productName"
-            value={formData.productName}
-            onChange={handleChange}
-            placeholder="Nhập tên sản phẩm..."
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Mô tả sản phẩm</label>
-          <textarea
-            name="productDescription"
-            value={formData.productDescription}
-            onChange={handleChange}
-            placeholder="Nhập mô tả sản phẩm..."
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Danh mục sản phẩm</label>
-          <div className="categories">
-            {categories.map((category) => (
-              <label key={category.id} className="category">
-                <input
-                  type="checkbox"
-                  checked={formData.productCategories.includes(category.id)}
-                  onChange={() => handleCategoryChange(category.id)}
-                />
-                {category.name}
-              </label>
-            ))}
+      {!user ? (
+        <p>Vui lòng <Link to="/login">đăng nhập</Link> để đăng ký sản phẩm.</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="product-register-form">
+          <div className="form-group">
+            <label>Tên sản phẩm *</label>
+            <input
+              type="text"
+              name="productName"
+              value={formData.productName}
+              onChange={handleInputChange}
+              placeholder="Nhập tên sản phẩm..."
+              required
+            />
           </div>
-        </div>
-        <div className="form-group">
-          <label>Thương hiệu</label>
-          <input
-            type="text"
-            name="brand"
-            value={formData.brand}
-            onChange={handleChange}
-            placeholder="Nhập thương hiệu..."
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Biến thể sản phẩm</label>
-          {formData.productVariants.map((variant, index) => (
-            <div key={index} className="variant">
-              <input
-                type="text"
-                placeholder="Kích thước..."
-                value={variant.size}
-                onChange={(e) => handleVariantChange(index, 'size', e.target.value)}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Màu sắc..."
-                value={variant.color}
-                onChange={(e) => handleVariantChange(index, 'color', e.target.value)}
-                required
-              />
-              <input
-                type="number"
-                placeholder="Giá..."
-                value={variant.price}
-                onChange={(e) => handleVariantChange(index, 'price', e.target.value)}
-                required
-              />
-              {formData.productVariants.length > 1 && (
-                <button type="button" className="remove-variant" onClick={() => removeVariant(index)}>
-                  Xóa
-                </button>
-              )}
+
+          <div className="form-group">
+            <label>Mô tả sản phẩm</label>
+            <textarea
+              name="productDescription"
+              value={formData.productDescription}
+              onChange={handleInputChange}
+              placeholder="Nhập mô tả sản phẩm..."
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Danh mục sản phẩm *</label>
+            {formData.productCategories.map((category, index) => (
+              <div key={index} className="category-group">
+                <input
+                  type="text"
+                  name={`productCategories.${index}.id`}
+                  value={category.id}
+                  onChange={handleInputChange}
+                  placeholder="Mã danh mục..."
+                  required
+                />
+                <input
+                  type="text"
+                  name={`productCategories.${index}.name`}
+                  value={category.name}
+                  onChange={handleInputChange}
+                  placeholder="Tên danh mục..."
+                  required
+                />
+                <div className="category-actions">
+                  <span
+                    className="sort-icon"
+                    onClick={() => {
+                      moveCategoryUp(index);
+                      moveCategoryDown(index);
+                    }}
+                  >
+                    ↕
+                  </span>
+                  {formData.productCategories.length > 1 && (
+                    <span className="remove-icon" onClick={() => removeCategory(index)}>
+                      ✕
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+            <button type="button" className="add-category-button" onClick={addCategory}>
+              Thêm danh mục
+            </button>
+          </div>
+
+          <div className="form-group">
+            <label>Thương hiệu</label>
+            <input
+              type="text"
+              name="brand"
+              value={formData.brand}
+              onChange={handleInputChange}
+              placeholder="Nhập thương hiệu..."
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Biến thể sản phẩm *</label>
+            <div className="variant-header">
+              <span>Tên biến thể</span>
+              <span>Kích thước</span>
+              <span>Màu sắc</span>
+              <span>Tồn kho</span>
+              <span>Giá</span>
+              <span></span>
             </div>
-          ))}
-          <button type="button" className="add-variant" onClick={addVariant}>
-            Thêm biến thể
-          </button>
-        </div>
-        <div className="form-group">
-          <label>Giá sản phẩm</label>
-          <input
-            type="number"
-            name="productPrice"
-            value={formData.productPrice}
-            onChange={handleChange}
-            placeholder="Nhập giá sản phẩm..."
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Ảnh sản phẩm (URL)</label>
-          <input
-            type="text"
-            name="productImg"
-            value={formData.productImg}
-            onChange={handleChange}
-            placeholder="Nhập URL ảnh sản phẩm..."
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Số lượng tồn kho</label>
-          <input
-            type="number"
-            name="productQuantity"
-            value={formData.productQuantity}
-            onChange={handleChange}
-            placeholder="Nhập số lượng..."
-            required
-          />
-        </div>
-        <button type="submit" className="submit-button">Đăng ký sản phẩm</button>
-        <p>
-          Đã có tài khoản? <Link to="/login" className="link">Đăng nhập</Link>
-        </p>
-      </form>
+            {formData.productVariants.map((variant, index) => (
+              <div key={variant.id} className="variant-group">
+                <input
+                  type="text"
+                  name={`productVariants.${index}.name`}
+                  value={variant.name}
+                  onChange={handleInputChange}
+                  placeholder="Tên biến thể..."
+                  required
+                />
+                <input
+                  type="text"
+                  name={`productVariants.${index}.size`}
+                  value={variant.size}
+                  onChange={handleInputChange}
+                  placeholder="Kích thước..."
+                />
+                <input
+                  type="text"
+                  name={`productVariants.${index}.color`}
+                  value={variant.color}
+                  onChange={handleInputChange}
+                  placeholder="Màu sắc..."
+                />
+                <input
+                  type="number"
+                  name={`productVariants.${index}.quantity`}
+                  value={variant.quantity}
+                  onChange={handleInputChange}
+                  placeholder="Tồn kho..."
+                  required
+                />
+                <input
+                  type="number"
+                  name={`productVariants.${index}.price`}
+                  value={variant.price}
+                  onChange={handleInputChange}
+                  placeholder="Giá..."
+                  required
+                />
+                <div className="variant-actions">
+                  <span
+                    className="sort-icon"
+                    onClick={() => {
+                      moveVariantUp(index);
+                      moveVariantDown(index);
+                    }}
+                  >
+                    ↕
+                  </span>
+                  {formData.productVariants.length > 1 && (
+                    <span className="remove-icon" onClick={() => removeVariant(index)}>
+                      ✕
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+            <button type="button" className="add-variant-button" onClick={addVariant}>
+              Thêm biến thể
+            </button>
+          </div>
+
+          <div className="form-group">
+            <label>Hình ảnh sản phẩm *</label>
+            <input
+              type="file"
+              name="file"
+              onChange={handleFileChange}
+              required
+            />
+          </div>
+
+          <button type="submit" className="submit-button">Đăng ký</button>
+        </form>
+      )}
     </div>
   );
 };
