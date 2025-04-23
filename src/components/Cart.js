@@ -13,6 +13,22 @@ const Cart = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   const userId = user?.customerId;
 
+  // Thông tin thanh toán
+  const [address, setAddress] = useState({
+    street: '',
+    city: '',
+    state: '',
+    zipCode: ''
+  });
+  const [shipMethod, setShipMethod] = useState({ methodName: 'STANDARD', cod: false });
+  const [paymentMethod, setPaymentMethod] = useState('CREDIT_CARD');
+
+  // Danh sách phương thức vận chuyển và hỗ trợ COD
+  const shipMethodOptions = [
+    { methodName: 'STANDARD', codSupported: true, displayName: 'Tiêu chuẩn' },
+    { methodName: 'EXPRESS', codSupported: false, displayName: 'Nhanh' }
+  ];
+
   // Lấy giỏ hàng từ backend
   const fetchCart = async () => {
     if (!userId) {
@@ -25,7 +41,6 @@ const Cart = () => {
     setLoading(true);
     try {
       const response = await axios.get(`http://localhost:8080/api/cart/get-cart/${userId}`);
-      // Chuyển Map thành mảng, lưu shopName cho mỗi item
       const cartItems = [];
       Object.entries(response.data).forEach(([shopName, items]) => {
         items.forEach(item => {
@@ -36,7 +51,8 @@ const Cart = () => {
             productSKU: item.productSKU,
             quantity: item.quantity,
             price: item.price,
-            image: item.productImg
+            image: item.productImg,
+            variantName: item.variantName
           });
         });
       });
@@ -107,13 +123,55 @@ const Cart = () => {
       return;
     }
 
+    // Kiểm tra thông tin địa chỉ
+    if (!address.street || !address.city || !address.state || !address.zipCode) {
+      alert('Vui lòng nhập đầy đủ thông tin địa chỉ!');
+      return;
+    }
+
+    // Kiểm tra tính hợp lệ của paymentMethod và cod
+    if (shipMethod.cod && paymentMethod !== 'CASH_ON_DELIVERY') {
+      alert('Khi chọn COD, phương thức thanh toán phải là "Thanh toán khi nhận hàng"!');
+      return;
+    }
+    if (!shipMethod.cod && paymentMethod === 'CASH_ON_DELIVERY') {
+      alert('Phương thức vận chuyển không hỗ trợ COD, vui lòng chọn phương thức thanh toán khác!');
+      return;
+    }
+
+    // Chuẩn bị dữ liệu OrderRequest
+    const orderRequest = {
+      userId: userId,
+      address: {
+        street: address.street,
+        city: address.city,
+        state: address.state,
+        zipCode: address.zipCode
+      },
+      products: cart.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        productImg: item.image,
+        variantName: item.variantName,
+        productSKU: item.productSKU,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      shipMethod: {
+        methodName: shipMethod.methodName,
+        cod: shipMethod.cod
+      },
+      paymentMethod: paymentMethod,
+      totalPrice: totalPrice
+    };
+
     try {
-      // Gọi API thanh toán (cần kiểm tra backend)
-      await axios.post('http://localhost:8080/api/checkout', { cart });
+      // Gọi API tạo đơn hàng
+      await axios.post('http://localhost:8080/api/order/create', orderRequest);
       // Xóa giỏ hàng trên backend
       await axios.delete(`http://localhost:8080/api/cart/delete/${userId}`);
       setCart([]);
-      alert('Thanh toán thành công!');
+      alert('Thanh toán thành công! Đơn hàng đã được tạo.');
       navigate('/');
     } catch (err) {
       alert('Thanh toán thất bại! Vui lòng thử lại.');
@@ -133,6 +191,10 @@ const Cart = () => {
     return <div className="cart-container"><p className="error">{error}</p></div>;
   }
 
+  // Kiểm tra xem phương thức vận chuyển có hỗ trợ COD hay không
+  const selectedShipMethod = shipMethodOptions.find(option => option.methodName === shipMethod.methodName);
+  const isCodSupported = selectedShipMethod?.codSupported || false;
+
   return (
     <div className="cart-container">
       <h2>Giỏ hàng</h2>
@@ -147,7 +209,7 @@ const Cart = () => {
                   <img src={item.image || 'https://via.placeholder.com/100'} alt={item.productName} />
                 </div>
                 <div className="cart-item-details">
-                  <h4>{item.productName}</h4>
+                  <h4>{`${item.productName} - ${item.variantName}`}</h4>
                   <p className="shop-name"><strong>Cửa hàng:</strong> {item.shopName}</p>
                   <p className="price">{(item.price * item.quantity).toLocaleString('vi-VN')}đ</p>
                   <div className="quantity-control">
@@ -173,6 +235,91 @@ const Cart = () => {
                 </div>
               </div>
             ))}
+          </div>
+          <div className="checkout-form">
+            <h3>Thông tin thanh toán</h3>
+            <div className="form-group">
+              <label>Địa chỉ: </label>
+              <input
+                type="text"
+                placeholder="Số nhà, đường"
+                value={address.street}
+                onChange={(e) => setAddress({ ...address, street: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Thành phố"
+                value={address.city}
+                onChange={(e) => setAddress({ ...address, city: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Tỉnh/Quận"
+                value={address.state}
+                onChange={(e) => setAddress({ ...address, state: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Mã bưu điện"
+                value={address.zipCode}
+                onChange={(e) => setAddress({ ...address, zipCode: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Phương thức vận chuyển: </label>
+              <select
+                value={shipMethod.methodName}
+                onChange={(e) => {
+                  const selectedOption = shipMethodOptions.find(option => option.methodName === e.target.value);
+                  const newCod = selectedOption.codSupported ? shipMethod.cod : false;
+                  setShipMethod({ methodName: e.target.value, cod: newCod });
+                  if (newCod) {
+                    setPaymentMethod('CASH_ON_DELIVERY');
+                  } else {
+                    setPaymentMethod('CREDIT_CARD');
+                  }
+                }}
+              >
+                {shipMethodOptions.map(option => (
+                  <option key={option.methodName} value={option.methodName}>
+                    {option.displayName}
+                  </option>
+                ))}
+              </select>
+              <div className="cod-option">
+                <input
+                  type="checkbox"
+                  checked={shipMethod.cod}
+                  disabled={!isCodSupported}
+                  onChange={(e) => {
+                    const newCod = e.target.checked;
+                    setShipMethod({ ...shipMethod, cod: newCod });
+                    if (newCod) {
+                      setPaymentMethod('CASH_ON_DELIVERY');
+                    } else {
+                      setPaymentMethod('CREDIT_CARD');
+                    }
+                  }}
+                />
+                <label className={!isCodSupported ? 'disabled' : ''}>
+                  Thanh toán khi nhận hàng (COD) {isCodSupported ? '' : '(Không hỗ trợ)'}
+                </label>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Phương thức thanh toán: </label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                disabled={shipMethod.cod}
+              >
+                <option value="CASH_ON_DELIVERY" disabled={!shipMethod.cod}>
+                  Thanh toán khi nhận hàng
+                </option>
+                <option value="CREDIT_CARD">Thẻ tín dụng</option>
+                <option value="BANK_TRANSFER">Chuyển khoản ngân hàng</option>
+              </select>
+            </div>
           </div>
           <div className="cart-summary">
             <h3>Tổng tiền: {totalPrice.toLocaleString('vi-VN')}đ</h3>

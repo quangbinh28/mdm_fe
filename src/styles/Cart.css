@@ -9,18 +9,6 @@
   margin-bottom: 20px;
 }
 
-.shop-cart {
-  margin-bottom: 30px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 20px;
-}
-
-.shop-cart h3 {
-  font-size: 20px;
-  margin-bottom: 15px;
-  color: #333;
-}
-
 .cart-items {
   display: flex;
   flex-direction: column;
@@ -54,6 +42,12 @@
 .cart-item-details h4 {
   margin: 0 0 10px;
   font-size: 18px;
+}
+
+.cart-item-details .shop-name {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 10px;
 }
 
 .cart-item-details .price {
@@ -98,6 +92,76 @@
 
 .remove-button:hover {
   background-color: #c82333;
+}
+
+.checkout-form {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.checkout-form h3 {
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+.form-group select {
+  cursor: pointer;
+}
+
+.form-group select:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+}
+
+.cod-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.cod-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.cod-option input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+.cod-option label {
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.cod-option label.disabled {
+  color: #888;
 }
 
 .cart-summary {

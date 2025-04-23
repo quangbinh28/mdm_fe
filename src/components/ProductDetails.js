@@ -55,7 +55,7 @@ const ProductDetails = () => {
 
     const cartItem = {
       productId: product.id,
-      productName: `${product.name} - ${selectedVariant.name}`, // Thêm tên biến thể vào productName
+      productName: product.name, // Thêm tên biến thể vào productName
       productSKU: "unknown",
       quantity: 1,
       price: selectedVariant.price || 0,
