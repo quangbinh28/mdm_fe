@@ -9,7 +9,8 @@ import Register from './components/Register';
 import Cart from './components/Cart';
 import ShopRegister from './components/ShopRegister';
 import ProductRegister from './components/ProductRegister';
-import UserProfile from './components/UserProfile'; // Thêm import
+import UserProfile from './components/UserProfile';
+import OrderHistory from './components/OrderHistory'; // Thêm import
 
 const App = () => {
   return (
@@ -31,7 +32,8 @@ const App = () => {
         <Route path="/cart" element={<Cart />} />
         <Route path="/shop-register" element={<ShopRegister />} />
         <Route path="/product-register" element={<ProductRegister />} />
-        <Route path="/user-profile" element={<UserProfile />} /> {/* Thêm route */}
+        <Route path="/user-profile" element={<UserProfile />} />
+        <Route path="/order-history" element={<OrderHistory />} /> {/* Thêm route */}
       </Routes>
     </Router>
   );

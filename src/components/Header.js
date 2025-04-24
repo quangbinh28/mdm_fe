@@ -21,6 +21,7 @@ const Header = () => {
             <Link to="/shop-register">Đăng ký shop</Link>
             <Link to="/product-register">Đăng ký sản phẩm</Link>
             <Link to="/user-profile">Hồ sơ</Link>
+            <Link to="/order-history">Lịch sử mua hàng</Link> {/* Thêm liên kết */}
             <span>Chào, {user.customerPhone || 'User'}</span>
             <button onClick={handleLogout} className="logout-button">Đăng xuất</button>
           </>
