@@ -168,8 +168,8 @@ const UserProfile = () => {
         customerGender: userData.customerGender,
         customerAvatar: userData.customerAvatar,
         customerDOB: userData.customerDOB,
-        customerAddress: customerAddress,
-        customerCards: customerCards
+        customerAddress: [customerAddress],
+        customerCards: [customerCards]
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       alert('Cập nhật thông tin thành công!');
