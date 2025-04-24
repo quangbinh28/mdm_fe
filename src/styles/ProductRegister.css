@@ -159,6 +159,24 @@
   color: #e60000;
 }
 
+.add-category-button {
+  padding: 8px 12px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-category-button:hover {
+  padding: 8px 12px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 .add-variant-button {
   padding: 8px 12px;
   background-color: #4caf50;
@@ -199,4 +217,17 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 16px;
+}
+
+.category-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.category-actions {
+  display: flex;
+  gap: 10px;
+  width: 40px; /* Đảm bảo chiều rộng cố định cho category-actions */
 }
