@@ -64,10 +64,14 @@
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .product-item img {
   width: 100%;
+  max-width: 150px;
   height: 150px;
   object-fit: cover;
   border-radius: 4px;
@@ -78,6 +82,10 @@
   font-weight: bold;
   margin: 10px 0;
   color: #333;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .price {
@@ -88,8 +96,26 @@
 
 .button-group {
   display: flex;
-  gap: 10px;
   justify-content: center;
+  width: 100%;
+  max-width: 150px;
+  margin-top: auto;
+}
+
+.detail-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+}
+
+.detail-button:hover {
+  background-color: #45a049;
 }
 
 .add-button {
@@ -105,22 +131,6 @@
 
 .add-button:hover {
   background-color: #d43f21;
-}
-
-.detail-button {
-  flex: 1;
-  padding: 10px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: center;
-  text-decoration: none;
-}
-
-.detail-button:hover {
-  background-color: #45a049;
 }
 
 .pagination {
