@@ -20,8 +20,9 @@
 
 .product-image img {
   width: 100%;
-  max-width: 300px;
-  height: auto;
+  min-width: 350px;
+  min-height: 350px; /* Đặt chiều cao cố định để hình ảnh lớn hơn */
+  object-fit: contain; /* Đảm bảo ảnh không bị méo */
   border-radius: 8px;
 }
 
