@@ -337,8 +337,16 @@ const UserProfile = () => {
             </>
           ) : (
             <p>
-              {customerAddress.houseNumber && customerAddress.street && customerAddress.city
-                ? `${customerAddress.houseNumber}, ${customerAddress.street}, ${customerAddress.ward}, ${customerAddress.district}, ${customerAddress.city}`
+              {customerAddress.houseNumber || customerAddress.street || customerAddress.city
+                ? `${customerAddress.houseNumber ? `Số ${customerAddress.houseNumber}` : ''}, ${
+                    customerAddress.street ? `Đường ${customerAddress.street}` : ''
+                  }, ${
+                    customerAddress.ward ? `Phường ${customerAddress.ward}` : ''
+                  }, ${
+                    customerAddress.district ? `Quận ${customerAddress.district}` : ''
+                  }, ${
+                    customerAddress.city ? `Thành phố/Tỉnh ${customerAddress.city}` : ''
+                  }`.replace(/(, )+/g, ', ').replace(/^, |, $/g, '')
                 : 'Chưa cập nhật'}
             </p>
           )}
