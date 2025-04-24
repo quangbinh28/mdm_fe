@@ -9,6 +9,7 @@ const UserProfile = () => {
   // Lấy dữ liệu người dùng từ localStorage
   const user = JSON.parse(localStorage.getItem('user'));
 
+
   // Dữ liệu mặc định nếu không có trong localStorage
   const defaultUserData = {
     customerId: '',
@@ -16,7 +17,7 @@ const UserProfile = () => {
     customerName: '',
     customerEmail: '',
     customerGender: '',
-    //customerAvatar: null, // Placeholder nếu không có avatar
+    customerAvatar: '', 
     customerDOB: '',
     customerAddress: {
       houseNumber: '',
@@ -43,11 +44,11 @@ const UserProfile = () => {
         customerGender: user.customerGender || defaultUserData.customerGender,
         customerAvatar: user.customerAvatar || defaultUserData.customerAvatar,
         customerDOB: user.customerDOB || defaultUserData.customerDOB,
-        customerAddress: user.customerAddress && typeof user.customerAddress === 'object'
-          ? { ...defaultUserData.customerAddress, ...user.customerAddress }
+        customerAddress: user.customerAddress[0] && typeof user.customerAddress[0] === 'object'
+          ? { ...defaultUserData.customerAddress, ...user.customerAddress[0] }
           : defaultUserData.customerAddress,
-        customerCards: user.customerCards && typeof user.customerCards === 'object'
-          ? { ...defaultUserData.customerCards, ...user.customerCards }
+        customerCards: user.customerCards[0] && typeof user.customerCards[0] === 'object'
+          ? { ...defaultUserData.customerCards, ...user.customerCards[0] }
           : defaultUserData.customerCards
       }
     : defaultUserData;
@@ -55,6 +56,7 @@ const UserProfile = () => {
   const [userData, setUserData] = useState(initialUserData);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
+  const [previewAvatar, setPreviewAvatar] = useState(user?.customerAvatar || '');
   const [newAvatarFile, setNewAvatarFile] = useState(null);
 
   // Kiểm tra đăng nhập khi component mount
@@ -88,8 +90,10 @@ const UserProfile = () => {
   // Xử lý upload file avatar
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setNewAvatarFile(file);
-    setUserData({ ...userData, customerAvatar: URL.createObjectURL(file) });
+    if (file) {
+      setNewAvatarFile(file);
+      setPreviewAvatar(URL.createObjectURL(file)); // chỉ đổi ảnh preview
+    }
   };
 
   // Xử lý submit cập nhật
@@ -101,55 +105,57 @@ const UserProfile = () => {
     const customerAddress = userData.customerAddress || defaultUserData.customerAddress;
     const customerCards = userData.customerCards || defaultUserData.customerCards;
 
-    // Validate
-    if (!userData.customerDOB) {
-      setError('Vui lòng nhập ngày sinh!');
-      return;
-    }
-    if (!userData.customerName) {
-      setError('Vui lòng nhập họ tên!');
-      return;
-    }
-    if (!userData.customerEmail) {
-      setError('Vui lòng nhập email!');
-      return;
-    }
-    if (!userData.customerGender) {
-      setError('Vui lòng chọn giới tính!');
-      return;
-    }
-    if (
-      !customerAddress.houseNumber ||
-      !customerAddress.street ||
-      !customerAddress.city ||
-      !customerAddress.ward ||
-      !customerAddress.district
-    ) {
-      setError('Vui lòng nhập đầy đủ thông tin địa chỉ!');
-      return;
-    }
-    if (
-      !customerCards.cardNumber ||
-      !customerCards.bank ||
-      !customerCards.code ||
-      !customerCards.expiredIn
-    ) {
-      setError('Vui lòng nhập đầy đủ thông tin thẻ ngân hàng!');
-      return;
-    }
+    // // Validate
+    // if (!userData.customerDOB) {
+    //   setError('Vui lòng nhập ngày sinh!');
+    //   return;
+    // }
+    // if (!userData.customerName) {
+    //   setError('Vui lòng nhập họ tên!');
+    //   return;
+    // }
+    // if (!userData.customerEmail) {
+    //   setError('Vui lòng nhập email!');
+    //   return;
+    // }
+    // if (!userData.customerGender) {
+    //   setError('Vui lòng chọn giới tính!');
+    //   return;
+    // }
+    // if (
+    //   !customerAddress.houseNumber ||
+    //   !customerAddress.street ||
+    //   !customerAddress.city ||
+    //   !customerAddress.ward ||
+    //   !customerAddress.district
+    // ) {
+    //   setError('Vui lòng nhập đầy đủ thông tin địa chỉ!');
+    //   return;
+    // }
+    // if (
+    //   !customerCards.cardNumber ||
+    //   !customerCards.bank ||
+    //   !customerCards.code ||
+    //   !customerCards.expiredIn
+    // ) {
+    //   setError('Vui lòng nhập đầy đủ thông tin thẻ ngân hàng!');
+    //   return;
+    // }
 
     // Chuẩn bị dữ liệu gửi đi
     const formDataToSend = new FormData();
     formDataToSend.append('customerId', userData.customerId);
-    formDataToSend.append('customerPhone', userData.customerPhone);
-    formDataToSend.append('customerName', userData.customerName);
-    formDataToSend.append('customerEmail', userData.customerEmail);
-    formDataToSend.append('customerGender', userData.customerGender);
-    formDataToSend.append('customerAvatar', newAvatarFile || userData.customerAvatar);
-    formDataToSend.append('customerDOB', userData.customerDOB);
-    formDataToSend.append('customerAddress', JSON.stringify(customerAddress));
-    formDataToSend.append('customerCards', JSON.stringify(customerCards));
-
+    formDataToSend.append('phoneNumber', userData.customerPhone);
+    formDataToSend.append('name', userData.customerName);
+    formDataToSend.append('email', userData.customerEmail);
+    formDataToSend.append('gender', userData.customerGender);
+    if (newAvatarFile) {
+      formDataToSend.append('avatarImg', newAvatarFile);
+    }
+    formDataToSend.append('DOB', userData.customerDOB);
+    formDataToSend.append('addresses', JSON.stringify([customerAddress]));
+    formDataToSend.append('cards', JSON.stringify([customerCards]));
+    console.log(userData.customerAvatar);
     try {
       await axios.put(`http://localhost:8080/api/users/update/${user.customerId}`, formDataToSend, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -255,7 +261,11 @@ const UserProfile = () => {
           <label>Ảnh đại diện</label>
           <div className="avatar-preview">
             <img
-              src={userData.customerAvatar}
+              src={
+                previewAvatar.startsWith('blob:')
+                  ? previewAvatar // nếu là ảnh preview mới chọn
+                  : `http://localhost:8080${previewAvatar}` // nếu là ảnh cũ từ server
+              }
               alt="Avatar"
               onError={(e) => (e.target.src = defaultUserData.customerAvatar)}
             />
@@ -377,33 +387,37 @@ const UserProfile = () => {
           )}
         </div>
 
-        {/* Nút chỉnh sửa hoặc lưu */}
         <div className="form-actions">
-          {isEditing ? (
-            <>
-              <button type="submit" className="save-button">Lưu</button>
-              <button
-                type="button"
-                className="cancel-button"
-                onClick={() => {
-                  setIsEditing(false);
-                  setUserData(initialUserData);
-                  setNewAvatarFile(null);
-                }}
-              >
-                Hủy
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              className="edit-button"
-              onClick={() => setIsEditing(true)}
-            >
-              Chỉnh sửa
-            </button>
-          )}
-        </div>
+  {!isEditing && (
+    <button
+      type="button"
+      className="edit-button"
+      onClick={() => setIsEditing(true)}
+    >
+      Chỉnh sửa
+    </button>
+  )}
+
+  {isEditing && (
+    <>
+      <button type="submit" className="save-button">
+        Lưu
+      </button>
+      <button
+        type="button"
+        className="cancel-button"
+        onClick={() => {
+          setIsEditing(false);
+          setUserData(initialUserData);
+          setNewAvatarFile(null);
+        }}
+      >
+        Hủy
+      </button>
+    </>
+  )}
+</div>
+
       </form>
     </div>
   );
