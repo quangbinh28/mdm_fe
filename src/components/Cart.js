@@ -322,7 +322,7 @@ const Cart = () => {
                 </>
               ) : (
                 <p className="no-address-message">
-                  Bạn chưa có địa chỉ nào. Vui lòng nhập địa chỉ hoặc <Link to="/profile" className="link">thêm địa chỉ</Link>.
+                  Bạn chưa có địa chỉ nào. Vui lòng nhập địa chỉ hoặc <Link to="/user-profile" className="link">thêm địa chỉ</Link>.
                 </p>
               )}
               <input
@@ -435,7 +435,7 @@ const Cart = () => {
                   </>
                 ) : (
                   <p className="no-card-message">
-                    Bạn chưa có thẻ ngân hàng. Vui lòng <Link to="/profile" className="link">thêm thẻ</Link> hoặc chọn phương thức thanh toán khác.
+                    Bạn chưa có thẻ ngân hàng. Vui lòng <Link to="/user-profile" className="link">thêm thẻ</Link> hoặc chọn phương thức thanh toán khác.
                   </p>
                 )
               )}

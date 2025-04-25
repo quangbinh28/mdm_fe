@@ -6,7 +6,7 @@ import '../styles/ProductDetails.css';
 const ProductDetails = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [selectedVariant, setSelectedVariant] = useState(null); // State để lưu biến thể đã chọn
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -55,7 +55,7 @@ const ProductDetails = () => {
 
     const cartItem = {
       productId: product.id,
-      productName: product.name, // Thêm tên biến thể vào productName
+      productName: product.name,
       productSKU: "unknown",
       quantity: 1,
       price: selectedVariant.price || 0,
@@ -164,6 +164,33 @@ const ProductDetails = () => {
             <Link to="/" className="back-link">Quay lại danh sách</Link>
           </div>
         </div>
+      </div>
+      <div className="related-products">
+        <h3>Sản phẩm liên quan</h3>
+        {product.relatedProducts && product.relatedProducts.length > 0 ? (
+          <div className="related-products-grid">
+            {product.relatedProducts.map((relatedProduct) => (
+              <Link
+                key={relatedProduct.id}
+                to={`/products/${relatedProduct.id}`}
+                className="related-product-card"
+              >
+                <div className="related-product-image">
+                  <img
+                    src={`http://localhost:8080${relatedProduct.prodImg}`}
+                    alt={relatedProduct.prodName}
+                  />
+                </div>
+                <div className="related-product-info">
+                  <h4>{relatedProduct.prodName}</h4>
+                  <p className="price">{relatedProduct.prodPrice.toLocaleString('vi-VN')}đ</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p>Không có sản phẩm liên quan.</p>
+        )}
       </div>
     </div>
   );

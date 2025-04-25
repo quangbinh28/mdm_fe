@@ -21,8 +21,8 @@
 .product-image img {
   width: 100%;
   min-width: 350px;
-  min-height: 350px; /* Đặt chiều cao cố định để hình ảnh lớn hơn */
-  object-fit: contain; /* Đảm bảo ảnh không bị méo */
+  min-height: 350px;
+  object-fit: contain;
   border-radius: 8px;
 }
 
@@ -125,4 +125,59 @@
 .error {
   color: red;
   text-align: center;
+}
+
+/* Style cho mục sản phẩm liên quan */
+.related-products {
+  margin-top: 40px;
+}
+
+.related-products h3 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.related-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.related-product-card {
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.related-product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.related-product-image img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.related-product-info {
+  padding: 10px;
+  text-align: center;
+}
+
+.related-product-info h4 {
+  font-size: 16px;
+  margin: 0 0 5px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.related-product-info .price {
+  color: #ee4d2d; /* Đổi màu để đồng bộ với ProductList.css */
+  font-weight: 500;
 }
