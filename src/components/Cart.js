@@ -13,8 +13,9 @@ const Cart = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   const userId = user?.customerId;
 
-  // Lấy danh sách địa chỉ từ localStorage
+  // Lấy danh sách địa chỉ và thẻ ngân hàng từ localStorage
   const savedAddresses = user?.customerAddress || [];
+  const savedCards = user?.customerCards || [];
 
   // Thông tin thanh toán
   const [address, setAddress] = useState({
@@ -26,6 +27,7 @@ const Cart = () => {
   });
   const [shipMethod, setShipMethod] = useState({ methodName: 'STANDARD', cod: false });
   const [paymentMethod, setPaymentMethod] = useState('CREDIT_CARD');
+  const [selectedCardIndex, setSelectedCardIndex] = useState('');
 
   // Danh sách phương thức vận chuyển và hỗ trợ COD
   const shipMethodOptions = [
@@ -118,7 +120,6 @@ const Cart = () => {
   const handleAddressSelect = (e) => {
     const selectedIndex = e.target.value;
     if (selectedIndex === '') {
-      // Reset địa chỉ về rỗng nếu chọn "Chọn địa chỉ..."
       setAddress({
         houseNumber: '',
         street: '',
@@ -167,6 +168,18 @@ const Cart = () => {
       return;
     }
 
+    // Kiểm tra thẻ ngân hàng khi chọn CREDIT_CARD
+    if (paymentMethod === 'CREDIT_CARD') {
+      if (savedCards.length === 0) {
+        alert('Bạn chưa có thẻ ngân hàng! Vui lòng thêm thẻ trong hồ sơ.');
+        return;
+      }
+      if (selectedCardIndex === '') {
+        alert('Vui lòng chọn thẻ ngân hàng để thanh toán!');
+        return;
+      }
+    }
+
     // Chuẩn bị dữ liệu OrderRequest
     const orderRequest = {
       userId: userId,
@@ -191,6 +204,9 @@ const Cart = () => {
         cod: shipMethod.cod
       },
       paymentMethod: paymentMethod,
+      paymentDetails: paymentMethod === 'CREDIT_CARD' && selectedCardIndex !== ''
+        ? savedCards[parseInt(selectedCardIndex)]
+        : null,
       totalPrice: totalPrice
     };
 
@@ -207,9 +223,25 @@ const Cart = () => {
     }
   };
 
-  // Lấy giỏ hàng khi component mount
+  // Lấy giỏ hàng và tự động chọn địa chỉ/thẻ mặc định khi component mount
   useEffect(() => {
     fetchCart();
+    // Tự động chọn địa chỉ mặc định nếu có
+    const defaultAddress = savedAddresses.find(addr => addr.isDefault);
+    if (defaultAddress) {
+      setAddress({
+        houseNumber: defaultAddress.houseNumber || '',
+        street: defaultAddress.street || '',
+        city: defaultAddress.city || '',
+        ward: defaultAddress.ward || '',
+        district: defaultAddress.district || ''
+      });
+    }
+    // Tự động chọn thẻ mặc định nếu có
+    const defaultCardIndex = savedCards.findIndex(card => card.isDefault);
+    if (defaultCardIndex !== -1) {
+      setSelectedCardIndex(defaultCardIndex.toString());
+    }
   }, []);
 
   if (loading) {
@@ -268,24 +300,30 @@ const Cart = () => {
           <div className="checkout-form">
             <h3>Thông tin thanh toán</h3>
             <div className="form-group">
-              <label>Địa chỉ: </label>
-              {savedAddresses.length > 0 && (
-                <select onChange={handleAddressSelect} className="address-select">
-                  <option value="">Chọn địa chỉ...</option>
-                  {savedAddresses.map((addr, index) => (
-                    <option key={index} value={index}>
-                      {`${addr.houseNumber ? `Số ${addr.houseNumber}` : ''}, ${
-                        addr.street ? `Đường ${addr.street}` : ''
-                      }, ${
-                        addr.ward ? `Phường ${addr.ward}` : ''
-                      }, ${
-                        addr.district ? `Quận ${addr.district}` : ''
-                      }, ${
-                        addr.city ? `Thành phố/Tỉnh ${addr.city}` : ''
-                      }`.replace(/(, )+/g, ', ').replace(/^, |, $/g, '')}
-                    </option>
-                  ))}
-                </select>
+              <label>Địa chỉ giao hàng: </label>
+              {savedAddresses.length > 0 ? (
+                <>
+                  <select onChange={handleAddressSelect} className="address-select">
+                    <option value="">Chọn địa chỉ...</option>
+                    {savedAddresses.map((addr, index) => (
+                      <option key={index} value={index}>
+                        {`${addr.houseNumber ? `Số ${addr.houseNumber}` : ''}, ${
+                          addr.street ? `Đường ${addr.street}` : ''
+                        }, ${
+                          addr.ward ? `Phường ${addr.ward}` : ''
+                        }, ${
+                          addr.district ? `Quận ${addr.district}` : ''
+                        }, ${
+                          addr.city ? `Thành phố/Tỉnh ${addr.city}` : ''
+                        }`.replace(/(, )+/g, ', ').replace(/^, |, $/g, '')}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <p className="no-address-message">
+                  Bạn chưa có địa chỉ nào. Vui lòng nhập địa chỉ hoặc <Link to="/profile" className="link">thêm địa chỉ</Link>.
+                </p>
               )}
               <input
                 type="text"
@@ -328,6 +366,7 @@ const Cart = () => {
                   setShipMethod({ methodName: e.target.value, cod: newCod });
                   if (newCod) {
                     setPaymentMethod('CASH_ON_DELIVERY');
+                    setSelectedCardIndex('');
                   } else {
                     setPaymentMethod('CREDIT_CARD');
                   }
@@ -349,6 +388,7 @@ const Cart = () => {
                     setShipMethod({ ...shipMethod, cod: newCod });
                     if (newCod) {
                       setPaymentMethod('CASH_ON_DELIVERY');
+                      setSelectedCardIndex('');
                     } else {
                       setPaymentMethod('CREDIT_CARD');
                     }
@@ -363,7 +403,12 @@ const Cart = () => {
               <label>Phương thức thanh toán: </label>
               <select
                 value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
+                onChange={(e) => {
+                  setPaymentMethod(e.target.value);
+                  if (e.target.value !== 'CREDIT_CARD') {
+                    setSelectedCardIndex('');
+                  }
+                }}
                 disabled={shipMethod.cod}
               >
                 <option value="CASH_ON_DELIVERY" disabled={!shipMethod.cod}>
@@ -372,9 +417,60 @@ const Cart = () => {
                 <option value="CREDIT_CARD">Thẻ tín dụng</option>
                 <option value="BANK_TRANSFER">Chuyển khoản ngân hàng</option>
               </select>
+              {paymentMethod === 'CREDIT_CARD' && (
+                savedCards.length > 0 ? (
+                  <>
+                    <select
+                      value={selectedCardIndex}
+                      onChange={(e) => setSelectedCardIndex(e.target.value)}
+                      className="card-select"
+                    >
+                      <option value="">Chọn thẻ ngân hàng...</option>
+                      {savedCards.map((card, index) => (
+                        <option key={index} value={index}>
+                          {`Số thẻ: ${card.cardNumber} | Ngân hàng: ${card.bank} | Hết hạn: ${card.expiredIn}`}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                ) : (
+                  <p className="no-card-message">
+                    Bạn chưa có thẻ ngân hàng. Vui lòng <Link to="/profile" className="link">thêm thẻ</Link> hoặc chọn phương thức thanh toán khác.
+                  </p>
+                )
+              )}
             </div>
           </div>
           <div className="cart-summary">
+            <h3>Thông tin đơn hàng</h3>
+            <p>
+              <strong>Địa chỉ giao hàng: </strong>
+              {address.houseNumber || address.street || address.city
+                ? `${address.houseNumber ? `Số ${address.houseNumber}` : ''}, ${
+                    address.street ? `Đường ${address.street}` : ''
+                  }, ${
+                    address.ward ? `Phường ${address.ward}` : ''
+                  }, ${
+                    address.district ? `Quận ${address.district}` : ''
+                  }, ${
+                    address.city ? `Thành phố/Tỉnh ${address.city}` : ''
+                  }`.replace(/(, )+/g, ', ').replace(/^, |, $/g, '')
+                : 'Chưa chọn địa chỉ'}
+            </p>
+            <p>
+              <strong>Phương thức vận chuyển: </strong>
+              {shipMethodOptions.find(option => option.methodName === shipMethod.methodName)?.displayName}
+              {shipMethod.cod ? ' (COD)' : ''}
+            </p>
+            <p>
+              <strong>Phương thức thanh toán: </strong>
+              {paymentMethod === 'CASH_ON_DELIVERY' ? 'Thanh toán khi nhận hàng' :
+               paymentMethod === 'CREDIT_CARD' ? 
+               (selectedCardIndex !== '' ? 
+                `Thẻ tín dụng (${savedCards[parseInt(selectedCardIndex)]?.cardNumber})` : 
+                'Thẻ tín dụng (Chưa chọn thẻ)') : 
+               'Chuyển khoản ngân hàng'}
+            </p>
             <h3>Tổng tiền: {totalPrice.toLocaleString('vi-VN')}đ</h3>
             <button className="checkout-button" onClick={handleCheckout}>
               Thanh toán
