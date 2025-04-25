@@ -44,10 +44,10 @@ const UserProfile = () => {
         customerGender: user.customerGender || defaultUserData.customerGender,
         customerAvatar: user.customerAvatar || defaultUserData.customerAvatar,
         customerDOB: user.customerDOB || defaultUserData.customerDOB,
-        customerAddress: user.customerAddress[0] && typeof user.customerAddress[0] === 'object'
+        customerAddress: Array.isArray(user.customerAddress) && user.customerAddress[0] && typeof user.customerAddress[0] === 'object'
           ? { ...defaultUserData.customerAddress, ...user.customerAddress[0] }
           : defaultUserData.customerAddress,
-        customerCards: user.customerCards[0] && typeof user.customerCards[0] === 'object'
+        customerCards: Array.isArray(user.customerCards) && user.customerCards[0] && typeof user.customerCards[0] === 'object'
           ? { ...defaultUserData.customerCards, ...user.customerCards[0] }
           : defaultUserData.customerCards
       }
