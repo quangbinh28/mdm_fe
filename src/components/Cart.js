@@ -13,6 +13,9 @@ const Cart = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   const userId = user?.customerId;
 
+  // Lấy danh sách địa chỉ từ localStorage
+  const savedAddresses = user?.customerAddress || [];
+
   // Thông tin thanh toán
   const [address, setAddress] = useState({
     houseNumber: '',
@@ -108,6 +111,30 @@ const Cart = () => {
       setCart(cart.filter(item => !(item.productId === productId && item.shopName === shopName)));
     } catch (err) {
       setError('Không thể xóa sản phẩm! Vui lòng thử lại.');
+    }
+  };
+
+  // Xử lý chọn địa chỉ từ dropdown
+  const handleAddressSelect = (e) => {
+    const selectedIndex = e.target.value;
+    if (selectedIndex === '') {
+      // Reset địa chỉ về rỗng nếu chọn "Chọn địa chỉ..."
+      setAddress({
+        houseNumber: '',
+        street: '',
+        city: '',
+        ward: '',
+        district: ''
+      });
+    } else {
+      const selectedAddress = savedAddresses[parseInt(selectedIndex)];
+      setAddress({
+        houseNumber: selectedAddress.houseNumber || '',
+        street: selectedAddress.street || '',
+        city: selectedAddress.city || '',
+        ward: selectedAddress.ward || '',
+        district: selectedAddress.district || ''
+      });
     }
   };
 
@@ -242,6 +269,24 @@ const Cart = () => {
             <h3>Thông tin thanh toán</h3>
             <div className="form-group">
               <label>Địa chỉ: </label>
+              {savedAddresses.length > 0 && (
+                <select onChange={handleAddressSelect} className="address-select">
+                  <option value="">Chọn địa chỉ...</option>
+                  {savedAddresses.map((addr, index) => (
+                    <option key={index} value={index}>
+                      {`${addr.houseNumber ? `Số ${addr.houseNumber}` : ''}, ${
+                        addr.street ? `Đường ${addr.street}` : ''
+                      }, ${
+                        addr.ward ? `Phường ${addr.ward}` : ''
+                      }, ${
+                        addr.district ? `Quận ${addr.district}` : ''
+                      }, ${
+                        addr.city ? `Thành phố/Tỉnh ${addr.city}` : ''
+                      }`.replace(/(, )+/g, ', ').replace(/^, |, $/g, '')}
+                    </option>
+                  ))}
+                </select>
+              )}
               <input
                 type="text"
                 placeholder="Số nhà"

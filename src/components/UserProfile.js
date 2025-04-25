@@ -9,7 +9,6 @@ const UserProfile = () => {
   // Lấy dữ liệu người dùng từ localStorage
   const user = JSON.parse(localStorage.getItem('user'));
 
-
   // Dữ liệu mặc định nếu không có trong localStorage
   const defaultUserData = {
     customerId: '',
@@ -17,15 +16,9 @@ const UserProfile = () => {
     customerName: '',
     customerEmail: '',
     customerGender: '',
-    customerAvatar: '', 
+    customerAvatar: '',
     customerDOB: '',
-    customerAddress: {
-      houseNumber: '',
-      street: '',
-      city: '',
-      ward: '',
-      district: ''
-    },
+    customerAddress: [{ houseNumber: '', street: '', city: '', ward: '', district: '' }], // Chuyển thành mảng
     customerCards: {
       cardNumber: '',
       bank: '',
@@ -44,9 +37,9 @@ const UserProfile = () => {
         customerGender: user.customerGender || defaultUserData.customerGender,
         customerAvatar: user.customerAvatar || defaultUserData.customerAvatar,
         customerDOB: user.customerDOB || defaultUserData.customerDOB,
-        customerAddress: Array.isArray(user.customerAddress) && user.customerAddress[0] && typeof user.customerAddress[0] === 'object'
-          ? { ...defaultUserData.customerAddress, ...user.customerAddress[0] }
-          : defaultUserData.customerAddress,
+        customerAddress: Array.isArray(user.customerAddress) && user.customerAddress.length > 0
+          ? user.customerAddress
+          : defaultUserData.customerAddress, // Đảm bảo là mảng
         customerCards: Array.isArray(user.customerCards) && user.customerCards[0] && typeof user.customerCards[0] === 'object'
           ? { ...defaultUserData.customerCards, ...user.customerCards[0] }
           : defaultUserData.customerCards
@@ -71,11 +64,10 @@ const UserProfile = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name.includes('customerAddress')) {
-      const field = name.split('.')[1];
-      setUserData({
-        ...userData,
-        customerAddress: { ...userData.customerAddress, [field]: value }
-      });
+      const [_, index, field] = name.split('.'); // customerAddress.0.houseNumber -> index=0, field=houseNumber
+      const newAddresses = [...userData.customerAddress];
+      newAddresses[index] = { ...newAddresses[index], [field]: value };
+      setUserData({ ...userData, customerAddress: newAddresses });
     } else if (name.includes('customerCards')) {
       const field = name.split('.')[1];
       setUserData({
@@ -87,12 +79,35 @@ const UserProfile = () => {
     }
   };
 
+  // Thêm địa chỉ mới
+  const addAddress = () => {
+    setUserData({
+      ...userData,
+      customerAddress: [
+        ...userData.customerAddress,
+        { houseNumber: '', street: '', city: '', ward: '', district: '' }
+      ]
+    });
+  };
+
+  // Xóa địa chỉ
+  const removeAddress = (index) => {
+    if (userData.customerAddress.length === 1) {
+      setError('Phải có ít nhất một địa chỉ!');
+      return;
+    }
+    setUserData({
+      ...userData,
+      customerAddress: userData.customerAddress.filter((_, i) => i !== index)
+    });
+  };
+
   // Xử lý upload file avatar
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setNewAvatarFile(file);
-      setPreviewAvatar(URL.createObjectURL(file)); // chỉ đổi ảnh preview
+      setPreviewAvatar(URL.createObjectURL(file));
     }
   };
 
@@ -101,46 +116,8 @@ const UserProfile = () => {
     e.preventDefault();
     setError('');
 
-    // Đảm bảo customerAddress và customerCards không phải undefined
     const customerAddress = userData.customerAddress || defaultUserData.customerAddress;
     const customerCards = userData.customerCards || defaultUserData.customerCards;
-
-    // // Validate
-    // if (!userData.customerDOB) {
-    //   setError('Vui lòng nhập ngày sinh!');
-    //   return;
-    // }
-    // if (!userData.customerName) {
-    //   setError('Vui lòng nhập họ tên!');
-    //   return;
-    // }
-    // if (!userData.customerEmail) {
-    //   setError('Vui lòng nhập email!');
-    //   return;
-    // }
-    // if (!userData.customerGender) {
-    //   setError('Vui lòng chọn giới tính!');
-    //   return;
-    // }
-    // if (
-    //   !customerAddress.houseNumber ||
-    //   !customerAddress.street ||
-    //   !customerAddress.city ||
-    //   !customerAddress.ward ||
-    //   !customerAddress.district
-    // ) {
-    //   setError('Vui lòng nhập đầy đủ thông tin địa chỉ!');
-    //   return;
-    // }
-    // if (
-    //   !customerCards.cardNumber ||
-    //   !customerCards.bank ||
-    //   !customerCards.code ||
-    //   !customerCards.expiredIn
-    // ) {
-    //   setError('Vui lòng nhập đầy đủ thông tin thẻ ngân hàng!');
-    //   return;
-    // }
 
     // Chuẩn bị dữ liệu gửi đi
     const formDataToSend = new FormData();
@@ -153,9 +130,9 @@ const UserProfile = () => {
       formDataToSend.append('avatarImg', newAvatarFile);
     }
     formDataToSend.append('DOB', userData.customerDOB);
-    formDataToSend.append('addresses', JSON.stringify([customerAddress]));
+    formDataToSend.append('addresses', JSON.stringify(customerAddress)); // Gửi mảng địa chỉ
     formDataToSend.append('cards', JSON.stringify([customerCards]));
-    console.log(userData.customerAvatar);
+
     try {
       await axios.put(`http://localhost:8080/api/users/update/${user.customerId}`, formDataToSend, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -168,7 +145,7 @@ const UserProfile = () => {
         customerGender: userData.customerGender,
         customerAvatar: userData.customerAvatar,
         customerDOB: userData.customerDOB,
-        customerAddress: [customerAddress],
+        customerAddress: customerAddress, // Lưu mảng địa chỉ
         customerCards: [customerCards]
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -184,7 +161,6 @@ const UserProfile = () => {
     return null;
   }
 
-  // Đảm bảo customerAddress và customerCards không phải undefined khi render
   const customerAddress = userData.customerAddress || defaultUserData.customerAddress;
   const customerCards = userData.customerCards || defaultUserData.customerCards;
 
@@ -263,8 +239,8 @@ const UserProfile = () => {
             <img
               src={
                 previewAvatar.startsWith('blob:')
-                  ? previewAvatar // nếu là ảnh preview mới chọn
-                  : `http://localhost:8080${previewAvatar}` // nếu là ảnh cũ từ server
+                  ? previewAvatar
+                  : `http://localhost:8080${previewAvatar}`
               }
               alt="Avatar"
               onError={(e) => (e.target.src = defaultUserData.customerAvatar)}
@@ -299,56 +275,82 @@ const UserProfile = () => {
           <label>Địa chỉ</label>
           {isEditing ? (
             <>
-              <input
-                type="text"
-                name="customerAddress.houseNumber"
-                value={customerAddress.houseNumber}
-                onChange={handleInputChange}
-                placeholder="Số nhà..."
-              />
-              <input
-                type="text"
-                name="customerAddress.street"
-                value={customerAddress.street}
-                onChange={handleInputChange}
-                placeholder="Đường..."
-              />
-              <input
-                type="text"
-                name="customerAddress.city"
-                value={customerAddress.city}
-                onChange={handleInputChange}
-                placeholder="Thành phố..."
-              />
-              <input
-                type="text"
-                name="customerAddress.ward"
-                value={customerAddress.ward}
-                onChange={handleInputChange}
-                placeholder="Phường..."
-              />
-              <input
-                type="text"
-                name="customerAddress.district"
-                value={customerAddress.district}
-                onChange={handleInputChange}
-                placeholder="Quận..."
-              />
+              {customerAddress.map((address, index) => (
+                <div key={index} className="address-group">
+                  <input
+                    type="text"
+                    name={`customerAddress.${index}.houseNumber`}
+                    value={address.houseNumber}
+                    onChange={handleInputChange}
+                    placeholder="Số nhà..."
+                  />
+                  <input
+                    type="text"
+                    name={`customerAddress.${index}.street`}
+                    value={address.street}
+                    onChange={handleInputChange}
+                    placeholder="Đường..."
+                  />
+                  <input
+                    type="text"
+                    name={`customerAddress.${index}.city`}
+                    value={address.city}
+                    onChange={handleInputChange}
+                    placeholder="Thành phố..."
+                  />
+                  <input
+                    type="text"
+                    name={`customerAddress.${index}.ward`}
+                    value={address.ward}
+                    onChange={handleInputChange}
+                    placeholder="Phường..."
+                  />
+                  <input
+                    type="text"
+                    name={`customerAddress.${index}.district`}
+                    value={address.district}
+                    onChange={handleInputChange}
+                    placeholder="Quận..."
+                  />
+                  <button
+                    type="button"
+                    className="remove-address-button"
+                    onClick={() => removeAddress(index)}
+                  >
+                    Xóa
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="add-address-button"
+                onClick={addAddress}
+              >
+                Thêm địa chỉ
+              </button>
             </>
           ) : (
-            <p>
-              {customerAddress.houseNumber || customerAddress.street || customerAddress.city
-                ? `${customerAddress.houseNumber ? `Số ${customerAddress.houseNumber}` : ''}, ${
-                    customerAddress.street ? `Đường ${customerAddress.street}` : ''
-                  }, ${
-                    customerAddress.ward ? `Phường ${customerAddress.ward}` : ''
-                  }, ${
-                    customerAddress.district ? `Quận ${customerAddress.district}` : ''
-                  }, ${
-                    customerAddress.city ? `Thành phố/Tỉnh ${customerAddress.city}` : ''
-                  }`.replace(/(, )+/g, ', ').replace(/^, |, $/g, '')
-                : 'Chưa cập nhật'}
-            </p>
+            <div>
+              {customerAddress.length > 0 ? (
+                customerAddress.map((address, index) => (
+                  <p key={index}>
+                    {address.houseNumber || address.street || address.city
+                      ? `${address.houseNumber ? `Số ${address.houseNumber}` : ''}, ${
+                          address.street ? `Đường ${address.street}` : ''
+                        }, ${
+                          address.ward ? `Phường ${address.ward}` : ''
+                        }, ${
+                          address.district ? `Quận ${address.district}` : ''
+                        }, ${
+                          address.city ? `Thành phố/Tỉnh ${address.city}` : ''
+                        }`.replace(/(, )+/g, ', ').replace(/^, |, $/g, '')
+                      : 'Chưa cập nhật'}
+                  </p>
+                ))
+              ) : (
+                <p>Chưa cập nhật</p>
+              )}
+            </div>
           )}
         </div>
 
@@ -396,36 +398,35 @@ const UserProfile = () => {
         </div>
 
         <div className="form-actions">
-  {!isEditing && (
-    <button
-      type="button"
-      className="edit-button"
-      onClick={() => setIsEditing(true)}
-    >
-      Chỉnh sửa
-    </button>
-  )}
+          {!isEditing && (
+            <button
+              type="button"
+              className="edit-button"
+              onClick={() => setIsEditing(true)}
+            >
+              Chỉnh sửa
+            </button>
+          )}
 
-  {isEditing && (
-    <>
-      <button type="submit" className="save-button">
-        Lưu
-      </button>
-      <button
-        type="button"
-        className="cancel-button"
-        onClick={() => {
-          setIsEditing(false);
-          setUserData(initialUserData);
-          setNewAvatarFile(null);
-        }}
-      >
-        Hủy
-      </button>
-    </>
-  )}
-</div>
-
+          {isEditing && (
+            <>
+              <button type="submit" className="save-button">
+                Lưu
+              </button>
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={() => {
+                  setIsEditing(false);
+                  setUserData(initialUserData);
+                  setNewAvatarFile(null);
+                }}
+              >
+                Hủy
+              </button>
+            </>
+          )}
+        </div>
       </form>
     </div>
   );
