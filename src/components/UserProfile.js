@@ -18,13 +18,8 @@ const UserProfile = () => {
     customerGender: '',
     customerAvatar: '',
     customerDOB: '',
-    customerAddress: [{ houseNumber: '', street: '', city: '', ward: '', district: '' }], // Chuyển thành mảng
-    customerCards: {
-      cardNumber: '',
-      bank: '',
-      code: '',
-      expiredIn: ''
-    }
+    customerAddress: [{ houseNumber: '', street: '', city: '', ward: '', district: '' }],
+    customerCards: [{ cardNumber: '', bank: '', code: '', expiredIn: '' }], // Chuyển thành mảng
   };
 
   // Khởi tạo dữ liệu ban đầu từ user hoặc giá trị mặc định
@@ -39,10 +34,10 @@ const UserProfile = () => {
         customerDOB: user.customerDOB || defaultUserData.customerDOB,
         customerAddress: Array.isArray(user.customerAddress) && user.customerAddress.length > 0
           ? user.customerAddress
-          : defaultUserData.customerAddress, // Đảm bảo là mảng
-        customerCards: Array.isArray(user.customerCards) && user.customerCards[0] && typeof user.customerCards[0] === 'object'
-          ? { ...defaultUserData.customerCards, ...user.customerCards[0] }
-          : defaultUserData.customerCards
+          : defaultUserData.customerAddress,
+        customerCards: Array.isArray(user.customerCards) && user.customerCards.length > 0
+          ? user.customerCards
+          : defaultUserData.customerCards, // Đảm bảo là mảng
       }
     : defaultUserData;
 
@@ -64,16 +59,15 @@ const UserProfile = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name.includes('customerAddress')) {
-      const [_, index, field] = name.split('.'); // customerAddress.0.houseNumber -> index=0, field=houseNumber
+      const [_, index, field] = name.split('.');
       const newAddresses = [...userData.customerAddress];
       newAddresses[index] = { ...newAddresses[index], [field]: value };
       setUserData({ ...userData, customerAddress: newAddresses });
     } else if (name.includes('customerCards')) {
-      const field = name.split('.')[1];
-      setUserData({
-        ...userData,
-        customerCards: { ...userData.customerCards, [field]: value }
-      });
+      const [_, index, field] = name.split('.'); // customerCards.0.cardNumber -> index=0, field=cardNumber
+      const newCards = [...userData.customerCards];
+      newCards[index] = { ...newCards[index], [field]: value };
+      setUserData({ ...userData, customerCards: newCards });
     } else {
       setUserData({ ...userData, [name]: value });
     }
@@ -99,6 +93,29 @@ const UserProfile = () => {
     setUserData({
       ...userData,
       customerAddress: userData.customerAddress.filter((_, i) => i !== index)
+    });
+  };
+
+  // Thêm thẻ ngân hàng mới
+  const addCard = () => {
+    setUserData({
+      ...userData,
+      customerCards: [
+        ...userData.customerCards,
+        { cardNumber: '', bank: '', code: '', expiredIn: '' }
+      ]
+    });
+  };
+
+  // Xóa thẻ ngân hàng
+  const removeCard = (index) => {
+    if (userData.customerCards.length === 1) {
+      setError('Phải có ít nhất một thẻ ngân hàng!');
+      return;
+    }
+    setUserData({
+      ...userData,
+      customerCards: userData.customerCards.filter((_, i) => i !== index)
     });
   };
 
@@ -130,8 +147,8 @@ const UserProfile = () => {
       formDataToSend.append('avatarImg', newAvatarFile);
     }
     formDataToSend.append('DOB', userData.customerDOB);
-    formDataToSend.append('addresses', JSON.stringify(customerAddress)); // Gửi mảng địa chỉ
-    formDataToSend.append('cards', JSON.stringify([customerCards]));
+    formDataToSend.append('addresses', JSON.stringify(customerAddress));
+    formDataToSend.append('cards', JSON.stringify(customerCards)); // Gửi mảng thẻ ngân hàng
 
     try {
       await axios.put(`http://localhost:8080/api/users/update/${user.customerId}`, formDataToSend, {
@@ -145,8 +162,8 @@ const UserProfile = () => {
         customerGender: userData.customerGender,
         customerAvatar: userData.customerAvatar,
         customerDOB: userData.customerDOB,
-        customerAddress: customerAddress, // Lưu mảng địa chỉ
-        customerCards: [customerCards]
+        customerAddress: customerAddress,
+        customerCards: customerCards // Lưu mảng thẻ ngân hàng
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       alert('Cập nhật thông tin thành công!');
@@ -359,41 +376,67 @@ const UserProfile = () => {
           <label>Thẻ ngân hàng</label>
           {isEditing ? (
             <>
-              <input
-                type="text"
-                name="customerCards.cardNumber"
-                value={customerCards.cardNumber}
-                onChange={handleInputChange}
-                placeholder="Số thẻ..."
-              />
-              <input
-                type="text"
-                name="customerCards.bank"
-                value={customerCards.bank}
-                onChange={handleInputChange}
-                placeholder="Ngân hàng..."
-              />
-              <input
-                type="text"
-                name="customerCards.code"
-                value={customerCards.code}
-                onChange={handleInputChange}
-                placeholder="Mã CVV..."
-              />
-              <input
-                type="text"
-                name="customerCards.expiredIn"
-                value={customerCards.expiredIn}
-                onChange={handleInputChange}
-                placeholder="Hết hạn (MM/YYYY)..."
-              />
+              {customerCards.map((card, index) => (
+                <div key={index} className="card-group">
+                  <input
+                    type="text"
+                    name={`customerCards.${index}.cardNumber`}
+                    value={card.cardNumber}
+                    onChange={handleInputChange}
+                    placeholder="Số thẻ..."
+                  />
+                  <input
+                    type="text"
+                    name={`customerCards.${index}.bank`}
+                    value={card.bank}
+                    onChange={handleInputChange}
+                    placeholder="Ngân hàng..."
+                  />
+                  <input
+                    type="text"
+                    name={`customerCards.${index}.code`}
+                    value={card.code}
+                    onChange={handleInputChange}
+                    placeholder="Mã CVV..."
+                  />
+                  <input
+                    type="text"
+                    name={`customerCards.${index}.expiredIn`}
+                    value={card.expiredIn}
+                    onChange={handleInputChange}
+                    placeholder="Hết hạn (MM/YYYY)..."
+                  />
+                  <button
+                    type="button"
+                    className="remove-card-button"
+                    onClick={() => removeCard(index)}
+                  >
+                    Xóa
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="add-card-button"
+                onClick={addCard}
+              >
+                Thêm thẻ
+              </button>
             </>
           ) : (
-            <p>
-              {customerCards.cardNumber && customerCards.bank
-                ? `Số thẻ: ${customerCards.cardNumber} | Ngân hàng: ${customerCards.bank} | Hết hạn: ${customerCards.expiredIn}`
-                : 'Chưa cập nhật'}
-            </p>
+            <div>
+              {customerCards.length > 0 ? (
+                customerCards.map((card, index) => (
+                  <p key={index}>
+                    {card.cardNumber && card.bank
+                      ? `Số thẻ: ${card.cardNumber} | Ngân hàng: ${card.bank} | Hết hạn: ${card.expiredIn}`
+                      : 'Chưa cập nhật'}
+                  </p>
+                ))
+              ) : (
+                <p>Chưa cập nhật</p>
+              )}
+            </div>
           )}
         </div>
 
